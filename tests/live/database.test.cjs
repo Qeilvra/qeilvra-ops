@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const { loadEnvironment, readServerConfiguration } = require("@airmech/config/server");
 const { DatabaseClient, applyMigrations, readMigrations } = require("@airmech/database");
+const { assertDisposableDatabase } = require("../helpers/disposable-database.cjs");
 
 const configuration = readServerConfiguration("api", loadEnvironment()).database;
 
@@ -42,12 +43,7 @@ test(
         : false,
   },
   async () => {
-    assert.ok(
-      ["127.0.0.1", "localhost", "[::1]"].includes(
-        new URL(configuration.migrationUrl ?? configuration.url).hostname,
-      ),
-      "Mutation tests only use a loopback disposable database",
-    );
+    assertDisposableDatabase(configuration);
     const migrations = await readMigrations();
     await applyMigrations(configuration, migrations);
     assert.equal(await applyMigrations(configuration, migrations), 0);

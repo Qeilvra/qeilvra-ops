@@ -9,9 +9,9 @@ product Phase 2. Task numbers describe delivery stages within Phase 1.
 TASK-010/TASK-011: DONE. The profile/role migration and typed repository passed
 real disposable PostgreSQL checks in [hosted CI](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37341781398).
 TASK-023: DONE, real shared controls and browser specimens verified by the full
-quality gate. TASK-030: REVIEW, customer model/contact ownership storage and
-real SQL tests prepared; local quality gate passed and hosted verification is
-pending. No new migration has been run on Supabase.
+quality gate. TASK-030: DONE, customer model/contact ownership and real SQL checks
+passed in [hosted CI](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37343170184).
+No new migration has been run on Supabase.
 
 ## Decisions that block protected workflows
 
@@ -69,3 +69,56 @@ replace the database, reset production or pretend SQL tests passed.
 
 The foundation is verified; the Phase 1 product, protected workflows, production
 deployment, disaster recovery, client UAT and go-live are not complete.
+
+## Batch acceptance record
+
+| Batch            | DONE     | BLOCKED                                           | Other tasks                                     |
+| ---------------- | -------- | ------------------------------------------------- | ----------------------------------------------- |
+| 2, TASK-010–017  | 010, 011 | 012–017                                           | None                                            |
+| 3, TASK-020–023  | 023      | 020–022                                           | None                                            |
+| 4, TASK-030–035  | 030      | 031–035                                           | None                                            |
+| 5, TASK-040–044  | None     | Upstream customer/site/auth policy                | BACKLOG                                         |
+| 6, TASK-050–056  | None     | 050, 053                                          | BACKLOG pending money/approval policy           |
+| 7, TASK-060–065  | None     | Upstream quotation/access policy                  | BACKLOG                                         |
+| 8, TASK-070–073  | None     | Upstream site/coverage/access policy              | BACKLOG                                         |
+| 9, TASK-080–092  | None     | 083, 090–092                                      | BACKLOG pending intake/SLA/coverage             |
+| 10, TASK-100–125 | None     | Upstream identity/service/assignment policy       | BACKLOG                                         |
+| 11, TASK-130–152 | None     | 131, 134, 151                                     | BACKLOG pending schedule/report decisions       |
+| 12, TASK-160–192 | None     | Upstream authorized real entities/data            | BACKLOG                                         |
+| 13, TASK-200–223 | None     | 220–223                                           | BACKLOG pending verified report/audit workflows |
+| 14, TASK-230–254 | None     | Integrated workflows/realistic volume unavailable | BACKLOG                                         |
+| 15, TASK-260–274 | None     | 260, 261, 270, 271, 273, 274                      | BACKLOG pending client/UAT/production           |
+
+No omitted task number is invented. The ranges identify batches, not missing
+tasks between their documented groups. An upstream blocker does not claim that
+every later task was attempted or individually marked BLOCKED.
+
+### Shared verification, security and performance
+
+Local full gate: build, formatting, lint, typecheck, unit/integration, startup,
+desktop/tablet/mobile browser tests and audit passed. Baseline: 66 + 3 + 18 tests;
+two mutation-boundary unit regressions subsequently passed (68 unit/integration).
+Hosted runs additionally exercised real migrations and PostgreSQL/Redis. Storage
+remains separately verified foundation infrastructure; hosted tests intentionally
+skip cloud storage rather than load production credentials.
+
+New migrations 0002/0003 were only applied to disposable PostgreSQL; 0001's
+checksum is preserved. Identity/user grants resolve in one parameterized indexed
+query with the existing pool. No business APIs, implicit super-admin authority,
+browser server secrets, provider accounts or production grants were introduced.
+Audit records reject update/delete/truncate. Additional regression coverage
+verifies actual RLS denial to a non-owner role even with SELECT privileges.
+
+Shared UI adds no dependency; bounded table/card pages, native fields/dialogs,
+system fonts and static specimen routes preserve the current startup behavior.
+Production-scale latency, domain E2E/security acceptance and field-device network
+testing remain incomplete. No whole-product performance/security approval is claimed.
+
+### Technical debt and readiness
+
+Confirm role/object policy, initial identity provisioning, reset origin/SMTP and
+session policy before completing protected flows. Establish least-privilege API
+DB credentials and approve deployment of new migrations. Repair Docker Desktop's
+read-only image store for convenient local service verification; hosted verification
+provides actual SQL evidence meanwhile. Unstarted modules, restore procedures,
+client UAT, training, monitoring and production deployment remain required scope.

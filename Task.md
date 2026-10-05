@@ -573,8 +573,8 @@ Avoid duplicate components.
 
 ## TASK-030 — Customer Model
 
-Status: REVIEW — documented fields and primary-contact ownership modeled;
-pending actual disposable PostgreSQL verification. See `docs/verification/task-030.md`.
+Status: DONE — documented fields, primary-contact ownership, archival integrity
+and real PostgreSQL tests passed in hosted CI. See `docs/verification/task-030.md`.
 
 Fields:
 
@@ -759,6 +759,10 @@ Still overdue
 
 ## TASK-050 — Quotation Model
 
+Status: BLOCKED — approved monetary calculation, currency/tax/rounding and
+quotation numbering/revision policy are required before finalizing money-bearing
+records. Do not infer these from illustrative examples.
+
 Include:
 
 - customer
@@ -797,6 +801,9 @@ Revision 3
 ---
 
 ## TASK-053 — Approval Workflow
+
+Status: BLOCKED — quotation approval hierarchy, authority and thresholds are
+explicitly unconfirmed in memory.md.
 
 Statuses:
 
@@ -1046,6 +1053,9 @@ CLOSED
 
 ## TASK-083 — Complaint SLA
 
+Status: BLOCKED — priority/SLA rules, working calendars and escalation policy
+require client confirmation.
+
 Support:
 
 - SLA due time
@@ -1085,11 +1095,16 @@ Audit required.
 
 ## TASK-090 — Warranty Check
 
+Status: BLOCKED — product/brand warranty eligibility rules are unconfirmed.
+
 Determine using asset warranty dates.
 
 ---
 
 ## TASK-091 — Warranty Workflow
+
+Status: BLOCKED — requires confirmed eligibility, AMC coverage and paid-service
+decisions; dates alone cannot establish approved customer-visible coverage.
 
 ```text
 Complaint
@@ -1106,6 +1121,9 @@ Warranty Active?
 ---
 
 ## TASK-092 — Warranty Override
+
+Status: BLOCKED — approved override authority and reason/approval policy are
+required alongside the blocked access matrix and warranty rules.
 
 Authorized users only.
 
@@ -1324,6 +1342,9 @@ Fields:
 
 ## TASK-131 — AMC Schedule Generation
 
+Status: BLOCKED — exact maintenance frequencies and scheduling rules are
+unconfirmed. No guessed schedules or background business jobs were created.
+
 Generate future PM schedule.
 
 Must prevent duplicates.
@@ -1358,6 +1379,9 @@ Exact business rules should be configurable.
 ---
 
 ## TASK-134 — AMC Renewal
+
+Status: BLOCKED — approved renewal/coverage and customer-visible commercial
+rules are required; do not invent contract extensions or prices.
 
 Create renewal action/opportunity.
 
@@ -1416,6 +1440,9 @@ Engineer Signature
 ---
 
 ## TASK-151 — Service Report PDF
+
+Status: BLOCKED — approved service-report format/signature requirements and
+verified service-report/work-order data are required before actual PDF generation.
 
 Generate via worker.
 
@@ -1711,17 +1738,26 @@ Authorized management/admin users only.
 
 ## TASK-220 — Database Backup
 
+Status: BLOCKED — backup ownership, retention, RPO/RTO and a controlled restore
+environment require confirmation. Provider availability alone is not a tested backup.
+
 Configure automated backups.
 
 ---
 
 ## TASK-221 — Document Backup
 
+Status: BLOCKED — approved document retention/recovery policy and controlled
+backup/restore storage are required.
+
 Ensure file redundancy.
 
 ---
 
 ## TASK-222 — Restore Test
+
+Status: BLOCKED — requires approved recovery objectives and actual backup
+artifacts plus an isolated restore environment; no restore success is fabricated.
 
 Actually restore from backup.
 
@@ -1730,6 +1766,9 @@ Do not consider backup complete until restore is tested.
 ---
 
 ## TASK-223 — Recovery Documentation
+
+Status: BLOCKED — recovery ownership and approved tested procedures are
+unconfirmed; a generic runbook cannot substitute for them.
 
 Document:
 
@@ -1914,11 +1953,16 @@ Test:
 
 ## TASK-260 — Client Test Environment
 
+Status: BLOCKED — approved client test environment/accounts and functioning
+protected workflows are required. A component preview is not a UAT environment.
+
 Prepare realistic staging environment.
 
 ---
 
 ## TASK-261 — Client Workflow Testing
+
+Status: BLOCKED — requires actual Airmech participation and integrated workflows.
 
 Airmech tests:
 
@@ -1952,6 +1996,9 @@ Enhancement
 
 ## TASK-270 — Production Environment
 
+Status: BLOCKED — approved deployment configuration, access and environment
+decisions are required; existing Supabase infrastructure is not an application deployment.
+
 Configure:
 
 - application
@@ -1964,6 +2011,9 @@ Configure:
 ---
 
 ## TASK-271 — Data Migration
+
+Status: BLOCKED — actual source data/format/volume, mapping and migration
+approval are unavailable. No historical data was deleted or fabricated.
 
 Import approved historical data.
 
@@ -1991,6 +2041,9 @@ Notifications
 
 ## TASK-273 — Training
 
+Status: BLOCKED — actual client participation and verified operational workflows
+are required before training can be completed.
+
 Train:
 
 - management
@@ -2002,6 +2055,9 @@ Train:
 ---
 
 ## TASK-274 — Go Live
+
+Status: BLOCKED — requires approved UAT, security/performance acceptance,
+tested recovery/migration, monitoring and deployment authorization.
 
 Release after:
 

@@ -6,6 +6,7 @@ const { loadEnvironment, readServerConfiguration } = require("@airmech/config/se
 const { applyMigrations, readMigrations, databasePoolOptions } = require("@airmech/database");
 const { hasPermission } = require("@airmech/contracts");
 const { Pool } = createRequire(require.resolve("@airmech/database"))("pg");
+const { assertDisposableDatabase } = require("../helpers/disposable-database.cjs");
 
 test(
   "disposable PostgreSQL enforces identity uniqueness, explicit RBAC, RLS and append-only audit",
@@ -17,12 +18,7 @@ test(
   },
   async () => {
     const configuration = readServerConfiguration("api", loadEnvironment()).database;
-    assert.ok(
-      ["127.0.0.1", "localhost", "[::1]"].includes(
-        new URL(configuration.migrationUrl ?? configuration.url).hostname,
-      ),
-      "Identity fixtures may never mutate a cloud database",
-    );
+    assertDisposableDatabase(configuration);
     await applyMigrations(configuration, await readMigrations());
     const { UserRepository } = await import("../../apps/api/dist/modules/users/user.repository.js");
     const pool = new Pool({ ...databasePoolOptions(configuration), max: 1 });
@@ -103,6 +99,18 @@ test(
       assert.equal(policies.rows[0].count, 0);
       const roles = await connection.query("SELECT count(*)::integer AS count FROM airmech.roles");
       assert.equal(roles.rows[0].count, 8);
+      // A non-owner with table privileges still receives zero rows through RLS.
+      // The generated role and its grants are rolled back with the fixtures.
+      const restrictedRole = `fixture_${randomUUID().replaceAll("-", "")}`;
+      await connection.query(`CREATE ROLE "${restrictedRole}" NOLOGIN NOBYPASSRLS`);
+      await connection.query(`GRANT USAGE ON SCHEMA airmech TO "${restrictedRole}"`);
+      await connection.query(`GRANT SELECT ON airmech.users, airmech.roles TO "${restrictedRole}"`);
+      await connection.query(`SET LOCAL ROLE "${restrictedRole}"`);
+      const invisible = await connection.query(
+        "SELECT (SELECT count(*) FROM airmech.users)::integer AS users, (SELECT count(*) FROM airmech.roles)::integer AS roles",
+      );
+      assert.deepEqual(invisible.rows[0], { users: 0, roles: 0 });
+      await connection.query("RESET ROLE");
     } finally {
       await connection.query("ROLLBACK");
       connection.release();

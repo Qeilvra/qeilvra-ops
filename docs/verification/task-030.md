@@ -1,6 +1,6 @@
 # TASK-030 — Customer model
 
-Status: REVIEW pending actual disposable PostgreSQL verification.
+Status: DONE.
 Assessment: 5 October 2026.
 
 ## Objective and implementation
@@ -47,8 +47,12 @@ Fixtures roll back and tests prohibit cloud mutation.
 ## Results, blockers and technical debt
 
 Local quality gate passed: 66 unit/integration, three startup and eighteen browser
-tests, build, lint, format, typecheck and zero known vulnerabilities. Actual hosted
-SQL verification is pending. Docker
+tests, build, lint, format, typecheck and zero known vulnerabilities. The
+[hosted run](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37343170184) passed
+actual migrations, PostgreSQL customer/identity integrity checks, live Redis tests
+and the full gate. Configured secrets were absent from hosted logs. Subsequent
+mutation-boundary regression tests add two unit checks (68 total) and require
+test mode, opt-in and loopback runtime **and** migration URLs. Docker
 Desktop's local image store is read-only, so cloud credentials are not used as
 a substitute disposable environment. Customer CRUD, contact/site administration
 and permission-filtered lists remain blocked on approved access policy and

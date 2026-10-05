@@ -5,6 +5,7 @@ const test = require("node:test");
 const { loadEnvironment, readServerConfiguration } = require("@airmech/config/server");
 const { applyMigrations, readMigrations, databasePoolOptions } = require("@airmech/database");
 const { Pool } = createRequire(require.resolve("@airmech/database"))("pg");
+const { assertDisposableDatabase } = require("../helpers/disposable-database.cjs");
 
 test(
   "disposable customer model preserves codes, primary-contact ownership and archive history",
@@ -16,12 +17,7 @@ test(
   },
   async () => {
     const configuration = readServerConfiguration("api", loadEnvironment()).database;
-    assert.ok(
-      ["127.0.0.1", "localhost", "[::1]"].includes(
-        new URL(configuration.migrationUrl ?? configuration.url).hostname,
-      ),
-      "Customer fixtures may never mutate a cloud database",
-    );
+    assertDisposableDatabase(configuration);
     await applyMigrations(configuration, await readMigrations());
     const pool = new Pool({ ...databasePoolOptions(configuration), max: 1 });
     const connection = await pool.connect();
