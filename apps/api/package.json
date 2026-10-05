@@ -1,0 +1,27 @@
+{
+  "name": "@airmech/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "format:check": "prettier --check . --ignore-path ../../.prettierignore",
+    "test": "pnpm --dir ../.. test:prepare && node --test ../../tests/unit/api-error-boundary.test.cjs",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "@airmech/config": "workspace:*",
+    "@airmech/contracts": "workspace:*",
+    "@airmech/database": "workspace:*",
+    "@airmech/queue": "workspace:*",
+    "@airmech/storage": "workspace:*",
+    "@nestjs/common": "12.1.2",
+    "@nestjs/core": "12.1.2",
+    "@nestjs/platform-express": "12.1.2",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  }
+}

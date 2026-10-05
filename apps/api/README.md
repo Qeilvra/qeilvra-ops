@@ -1,0 +1,26 @@
+# Airmech One API
+
+TASK-001 establishes the NestJS process boundary. `GET /health` returns the shared
+process-liveness contract. It does not check PostgreSQL, Redis, storage,
+authentication, permissions, or business readiness.
+
+The API uses ECMAScript modules to match NestJS 12. Local imports use the emitted
+`.js` extension; shared workspace packages and the worker remain CommonJS.
+
+The only registered controller is the health controller. There are no business
+endpoints, database writes, or external provider calls yet. Authentication and
+authorization must be added before protected business routes are introduced.
+
+Requests receive a bounded `X-Request-Id`. Invalid incoming IDs are replaced.
+HTTP failures use the shared error envelope; unexpected exception messages,
+stacks, request bodies, and credentials are never returned or written to the
+initial process logs. A request ID and error category are logged for correlation.
+Domain errors and redacted diagnostic logging will be added by their owning tasks.
+Before introducing domain routes, extend the error boundary with explicitly safe
+business codes and validation field errors. The current status mappings are for
+startup, missing routes, and parser failures only, and must not discard future
+domain-specific messages or entered form values.
+
+The process binds to `127.0.0.1:3001` by default. `HOST`, `PORT`, and `NODE_ENV`
+are validated by `@airmech/config`. SIGINT and SIGTERM close the Nest application.
+See the repository README for workspace build and development commands.

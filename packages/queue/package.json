@@ -1,0 +1,26 @@
+{
+  "name": "@airmech/queue",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "browser": null,
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "format:check": "prettier --check . --ignore-path ../../.prettierignore",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "pnpm run build && node --test ../../tests/unit/queue.test.cjs"
+  },
+  "dependencies": {
+    "@airmech/config": "workspace:*",
+    "bullmq": "6.3.11",
+    "ioredis": "6.0.0"
+  }
+}

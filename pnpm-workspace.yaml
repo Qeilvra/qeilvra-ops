@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+
+# Next's lint plugin only uses globSync to discover app roots. This replacement
+# avoids the unpatched braces advisory; its patch keeps root discovery compatible.
+overrides:
+  "@next/eslint-plugin-next@16.3.8>fast-glob": "npm:tinyglobby@0.2.17"
+patchedDependencies:
+  "@next/eslint-plugin-next@16.3.8": patches/@next__eslint-plugin-next@16.3.8.patch

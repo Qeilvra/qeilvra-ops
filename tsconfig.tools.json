@@ -1,0 +1,8 @@
+{
+  "extends": "@airmech/config/tsconfig.node.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "noEmit": true
+  },
+  "include": ["playwright.config.ts", "tests/browser/**/*.ts"]
+}
