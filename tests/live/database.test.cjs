@@ -23,6 +23,9 @@ test(
       // Supavisor may change backend sessions; the application pool still reuses client connections.
       if (["localhost", "127.0.0.1", "[::1]"].includes(new URL(configuration.url).hostname)) {
         assert.equal(first[0].pid, second[0].pid);
+      } else {
+        const tls = await database.query("SELECT ssl FROM pg_stat_ssl WHERE pid=pg_backend_pid()");
+        assert.equal(tls[0]?.ssl, true, "Remote PostgreSQL must use verified TLS.");
       }
     } finally {
       await database.close();

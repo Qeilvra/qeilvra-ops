@@ -248,14 +248,12 @@ Never expose secrets to frontend code.
 
 **Status:** BLOCKED
 
-Infrastructure implemented and locally verified 5 October 2026: typed lazy `pg`
-pool, strict remote TLS, explicit checksum-checked SQL migrations, development
-seed strategy without records, API/worker shutdown and browser import guards.
-Disposable PostgreSQL verified queries, pooling, replay, checksum rejection and
-atomic rollback. The full quality gate passed. Real Supabase connection acceptance
-requires the selected non-production project's DATABASE_URL and CA when needed.
-CLI account login is available but supplies no project database password.
-Evidence: `docs/verification/task-005.md`. No production DDL or domain tables.
+Live closeout on 5 October 2026: DATABASE_URL is configured locally. Real
+Supabase connection fails strict TLS with SELF_SIGNED_CERT_IN_CHAIN before
+authentication. Supply the project's downloaded CA through DATABASE_CA_FILE;
+TLS/query/pool/migration acceptance remains unverified. No remote DDL or data
+mutation occurred. Existing lazy pg pool, migrations and browser boundaries
+are preserved. Evidence: docs/verification/task-005.md.
 
 Set up:
 
@@ -290,15 +288,13 @@ Required for:
 
 ## TASK-007 — Object Storage
 
-**Status:** BLOCKED
+**Status:** DONE
 
-Server-only Supabase Storage adapter implemented with deny-by-default authorization,
-private-bucket verification, generated keys, streaming file validation and bounded
-signed downloads. Eight local storage tests and the full quality gate passed.
-Real upload/private access/signed retrieval/cleanup acceptance requires SUPABASE_URL,
-SUPABASE_SERVICE_ROLE_KEY and an existing private STORAGE_BUCKET. Its live test
-is explicitly skipped; no cloud success is claimed.
-Evidence: `docs/verification/task-007.md`.
+Live Supabase acceptance passed on 5 October 2026 using the sole existing private
+bucket: generated-key upload, metadata, public/anonymous denial, matching signed
+download, actual expiry, exact-object deletion and empty test-prefix confirmation.
+Secrets and bucket selection are local only. Deny-default authorization and
+bounded streaming remain intact. Evidence: docs/verification/task-007.md.
 
 Support private files:
 
@@ -311,23 +307,13 @@ Support private files:
 
 ## TASK-008 — CI Pipeline
 
-**Status:** BLOCKED
+**Status:** DONE
 
-Prospective GitHub Actions workflow implemented: one frozen pnpm installation,
-store cache, SHA-pinned actions, complete quality gate, browser checks, and
-disposable PostgreSQL/Redis integration checks. YAML and structural tests passed;
-the same local gate and dependency audit passed. This workspace had no Git
-repository during the infrastructure batch. Git was subsequently initialized on
-`main` and origin set to `git@github.com:Qeilvra/qeilvra-ops.git` at the user's
-request. GitHub's host key was verified, but remote access fails with
-`Permission denied (publickey)`. Hosted activation/execution remain blocked on
-SSH authentication. No commit, push, repository publication or account changes
-were performed.
-Evidence: `docs/verification/task-008.md`.
-
-TASK-010 — User Model / Authentication foundation is next after infrastructure
-blockers are resolved. TASK-009 does not exist. No authentication or business
-feature was started during TASK-005 through TASK-008.
+GitHub foundation run 37298345682 passed all steps for commit dfdf34b on main:
+frozen install, complete quality gate, browsers, disposable PostgreSQL migrations
+and live PostgreSQL/Redis verification. Logs contain none of the configured local
+secrets. Existing HTTPS Git credentials work; the earlier SSH blocker is resolved.
+Evidence: docs/verification/task-008.md.
 
 Run on every PR:
 
@@ -338,6 +324,9 @@ lint
 tests
 build
 ```
+
+There is no TASK-009. TASK-010 is next after TASK-005's remaining live database
+acceptance passes. No authentication or business module was started.
 
 ---
 

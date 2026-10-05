@@ -6,8 +6,9 @@ Operations Management System for Airmech Oman. Built by **Qeilvra**.
 
 TASK-001 through TASK-004 establish the monorepo and validated configuration.
 TASK-005 through TASK-008 add PostgreSQL, queue, private storage, and CI scaffolding.
-Live Supabase and hosted CI acceptance remain blocked pending credentials and
-repository setup. This is a startup foundation; authentication and protected
+Live private Supabase Storage and hosted GitHub CI acceptance passed.
+Live PostgreSQL acceptance remains blocked by database CA trust configuration.
+This is a startup foundation; authentication and protected
 business modules have not started.
 The startup screen contains no fabricated operational data.
 
@@ -146,13 +147,12 @@ rules, React hook checks, Next.js checks, and architecture import guards.
 Prettier handles formatting separately. Run `corepack pnpm format` to apply
 the same repository formatter used by `format:check`.
 
-The original specifications are excluded from automatic formatting. This
-workspace now has local Git on `main` and origin
-`git@github.com:Qeilvra/qeilvra-ops.git`. Remote verification is blocked by SSH
-authentication (`Permission denied (publickey)`). The prepared
-[GitHub Actions workflow](.github/workflows/ci.yml) uses a frozen install,
-SHA-pinned actions, store caching, the complete gate, and disposable live services.
-Authorize repository access and pass a hosted run before accepting TASK-008.
+The original specifications are excluded from automatic formatting. Git is on
+main with HTTPS origin for Qeilvra/qeilvra-ops. Hosted GitHub Actions has passed
+the frozen installation, complete gate, and disposable infrastructure checks.
+For remote PostgreSQL verification, configure DATABASE_CA_FILE with the project's
+trusted PEM certificate from Supabase Database Settings; do not disable TLS checks.
+The local storage bucket is private and verified. TASK-010 remains unstarted.
 
 ## Workspace ownership
 

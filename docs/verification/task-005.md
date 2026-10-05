@@ -71,12 +71,40 @@ BullMQ's supported JavaScript path passed all queue checks.
 
 ## Results and blockers
 
-Initial migration and safe queries passed on disposable PostgreSQL 17. Real
-Supabase credentials are absent; CLI account login does not supply a project
-database password. Cloud connection acceptance is BLOCKED, so TASK-005 is not
-DONE. No production migration was run.
+Closeout verification on 5 October 2026 loaded the actual ignored local environment.
+DATABASE_URL and the server key are now configured; the historical missing-secret
+blocker is resolved. The typed pool attempted the real project connection and
+returned its redacted DATABASE_UNAVAILABLE error. A diagnostic pool using the
+same strict TLS settings identified SELF_SIGNED_CERT_IN_CHAIN before database
+authentication. No credential, raw provider message, or connection string was logged.
+
+TASK-005 remains BLOCKED: DATABASE_CA_FILE is unset and the Supabase database CA
+is not trusted by the current driver. Obtain the certificate from the project's
+[Database Settings SSL configuration](https://supabase.com/docs/guides/platform/ssl-enforcement)
+and supply its local PEM path through the existing DATABASE_CA_FILE setting.
+Attempts to obtain the public CA from the official download endpoint did not
+succeed. Certificate verification was never disabled. DNS currently returns
+an IPv6 direct endpoint; confirm connectivity after the CA is supplied, or use
+the project's documented session pooler if IPv6 is unavailable.
+
+The existing live PostgreSQL test was run explicitly with DATABASE_ENABLED=true
+and ENV_FILE pointing at local .env: its safe-query test failed connection,
+and its loopback-only mutation test was intentionally skipped. TLS, safe SQL,
+real-project pool reuse, migration ledger and checksum verification therefore
+remain unverified. No remote DDL, reset, schema deletion or data mutation occurred.
+The test now asserts pg_stat_ssl.ssl for successful remote connections.
+Local import/export and environment-secret boundary checks remain in the full gate.
+The existing migration runner and read-only development seed were preserved.
 
 ## Technical debt and follow-up
+
+Closeout local gate: `pnpm check` passed all ten production builds, lint,
+formatting, strict workspace/tooling types, 64 unit/integration tests, three
+startup checks, six browser checks and the dependency audit. Separate
+`pnpm audit` reported no known vulnerabilities. A scan of tracked files,
+staged files and generated browser assets found none of the configured local
+server secrets; `.env` remains ignored. The live database failure is reported
+separately and is not suppressed by the successful offline gate.
 
 Supply the selected non-production runtime/direct connection settings and CA
 when needed; run `db:verify`, then explicitly review/apply the migration. Record

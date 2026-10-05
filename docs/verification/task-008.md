@@ -1,18 +1,10 @@
 # TASK-008 verification
 
-Assessment date: 5 October 2026. Status: BLOCKED for hosted activation. The
-workflow and local validation are implemented. Following the user's remote
-instruction, local Git was initialized on `main` and origin set to
-`git@github.com:Qeilvra/qeilvra-ops.git`. Remote access and hosted execution are
-blocked by SSH authentication (`Permission denied (publickey)`).
-
-The GitHub Ed25519 host key was checked against its
-[official published fingerprint](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints)
-using a workspace-local ignored known-hosts file and strict checking. No private
-key contents were read. No public keys were found in the default SSH directory;
-the SSH agent is unavailable. No commit or push was made, and the remote's
-existing branches/content could not be inspected. Historical batch checks below
-remain unchanged.
+Assessment date: 5 October 2026. Status: DONE after hosted GitHub verification.
+The repository already has foundation commit dfdf34b on main, with HTTPS origin
+for Qeilvra/qeilvra-ops. Existing Windows Git credentials work outside the sandbox;
+the earlier SSH blocker is obsolete. No account, token or branch-security changes
+were made. Hosted evidence follows; the existing CI workflow is unchanged.
 
 ## Objective
 
@@ -110,25 +102,33 @@ services. These checks cannot substitute for a hosted Actions execution.
 
 ## Verification results
 
-| Check                                        | Result                                 |
-| -------------------------------------------- | -------------------------------------- |
-| Workflow implementation                      | Complete                               |
-| YAML parsing and structural checks           | Passed: 4 tests, no failures/skips     |
-| Local full quality gate and dependency audit | Passed; zero known vulnerabilities     |
-| Hosted GitHub Actions execution              | BLOCKED: SSH repository authentication |
-| Hosted elapsed-time measurement              | BLOCKED until activation               |
+The foundation commit is present on origin/main. Authenticated GitHub API
+verification confirmed the [hosted run](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37298345682)
+completed successfully for dfdf34beddee8bab81b1a7c898a5da914acd9b04.
+The Quality and infrastructure job and every step succeeded: service containers,
+frozen pnpm installation, Chromium setup, the complete quality gate, explicit
+disposable PostgreSQL migrations, and live PostgreSQL/Redis checks. Reported run
+duration was 168 seconds. No hosted-only fix or weakened check was necessary.
+
+Job logs were retrieved in memory and compared with the configured local server
+key, database URI/password and Redis URI where present. None appeared. Neither
+logs nor credentials were printed or saved. CI uses isolated fixtures and never
+loads the developer's local .env. The server/browser boundaries remain intact.
+The closeout changes are committed and pushed separately, with latest-run
+confirmation recorded after completion.
 
 ## Blockers, technical debt, and follow-up
 
-TASK-008 remains BLOCKED until SSH repository access is authorized, the remote's
-existing history and default branch are inspected, the reviewed workflow is
-committed/pushed, and a hosted run succeeds. Local Git and origin are configured;
-account changes, repository publication and branch protection were not performed.
-Adjust the `main` push trigger if the selected repository has another default
-branch, then make the named quality job required for merging.
+Closeout local `pnpm check` and separate `pnpm audit` passed. The complete gate
+includes ten builds, lint, formatting, strict types, 64 unit/integration tests,
+three startup checks and six browser checks. Secret scanning covered tracked
+files, staged files and generated browser assets. `.env` remains ignored and
+untracked. No runtime infrastructure dependency or workflow change was needed.
 
-Service images use explicit supported version lines with patch updates allowed;
-exact image digests can be pinned after a hosted runner verifies the selected
-platform. Upgrade action SHAs and Node deliberately with normal review.
-Existing documented Next lint patch and URLPattern declaration bridge remain
-unchanged. No authentication, operational module, or TASK-010 work is included.
+Hosted CI acceptance has no remaining blocker. Credentials remain in the existing
+Windows credential manager; no token is written into project files or reports.
+The existing workflow still uses one install and build, lockfile-based store
+caching, pinned actions, bounded job/service timeouts and failure propagation.
+Branch-protection administration is a later repository-management action.
+Service images use explicit supported version lines; optional digest pinning and
+reviewed action upgrades remain documented maintenance. TASK-010 was not started.

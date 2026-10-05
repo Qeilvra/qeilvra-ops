@@ -1,8 +1,7 @@
 # TASK-007 verification — private object storage
 
-Date: 5 October 2026. Status: BLOCKED pending a real configured private bucket.
-The batch quality gate passed. Local scaffolding is implemented;
-cloud verification has not been claimed.
+Date: 5 October 2026. Status: DONE after live private Storage acceptance and
+local quality verification.
 
 ## Objective
 
@@ -101,14 +100,42 @@ The separate live suite recorded six PostgreSQL/Redis passes and one explicit
 Supabase Storage credential skip. Ordinary local tests require no cloud secrets;
 real cloud storage verification remains a separate opt-in check.
 
-## Blockers
+## Live closeout results and blockers
 
-Real Supabase Storage verification requires a configured project URL, server
-service-role key, and an existing private bucket. CLI sign-in alone does not
-provide these application settings. Do not mark DONE until cloud acceptance
-and the required quality gate pass.
+Closeout on 5 October 2026 used the ignored local SUPABASE_URL and server key.
+The project bucket API returned HTTP 200 and exactly one existing bucket with
+public=false. Its validated identifier was saved as local STORAGE_BUCKET;
+no bucket was created and no provider policy was changed. Verification used the
+configured project origin without a Data API suffix.
+
+The live test passed without skips: server adapter private-bucket verification,
+tiny generated-key upload, uploaded-object metadata, unsigned public denial,
+anonymous authenticated-route denial, authorized signed download and exact
+content match. A separate one-second signed URL was rejected after expiry.
+Finally the adapter deleted the exact generated object, metadata access failed,
+and an independent listing of its unique test prefix returned an empty array.
+Supabase reports missing-object metadata as HTTP 400 on this project; the test
+accepts 400/404 only alongside that independent empty-prefix confirmation.
+All temporary objects were removed, including the initial check whose cleanup
+assertion expected only HTTP 404. No signed URL or secret was printed.
+
+Command: NODE_ENV=test ENV_FILE=<local ignored env path> node --test
+tests/live/storage.test.cjs. Result: 1 passed, 0 failed, 0 skipped.
+The public-key probe uses apikey only because publishable keys are not user JWTs.
+The adapter, deny-default authorization, 6 MiB bounded streaming, generated paths,
+300-second TTL ceiling and browser/server separation remain unchanged.
+No cloud storage acceptance blocker remains. Status is DONE after the full local
+gate passed; final gate evidence is recorded below.
 
 ## Technical debt and follow-up
+
+Closeout `pnpm check` passed: ten builds, lint, formatting, strict types,
+64 unit/integration tests, three startup tests, six browser tests and a clean
+audit. The new expiry test initially failed lint because its timer lacked an
+explicit import; using Node's timers/promises fixed it without changing lint
+rules. A tracked/staged/browser-asset scan found no configured server secrets.
+Only live verification tests, status/setup documentation and the ignored local
+environment changed; the production storage adapter remains unchanged.
 
 Connect future authenticated actor/object policies without changing the safe
 default. Persist document associations in the owning future business module.

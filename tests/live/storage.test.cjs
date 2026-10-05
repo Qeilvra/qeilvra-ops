@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const test = require("node:test");
+const { setTimeout: delay } = require("node:timers/promises");
 
 const {
   loadEnvironment,
@@ -54,6 +55,8 @@ test(
         size: body.length,
         body,
       });
+      const uploaded = await service.metadata(actorId, stored.object);
+      assert.equal(uploaded.size, body.length);
       const unsigned = `${configuration.storage.supabaseUrl}/storage/v1/object/public/${encodeURIComponent(configuration.storage.bucket)}/${stored.object.key}`;
       const anonymous = await fetch(unsigned, {
         signal: AbortSignal.timeout(15_000),
@@ -70,7 +73,8 @@ test(
       const unprivileged = await fetch(authenticatedRoute, {
         signal: AbortSignal.timeout(15_000),
         redirect: "error",
-        headers: anonKey ? { apikey: anonKey, authorization: `Bearer ${anonKey}` } : {},
+        // Publishable keys are application API keys, not user JWTs.
+        headers: anonKey ? { apikey: anonKey } : {},
       });
       assert.equal(
         unprivileged.ok,
@@ -88,8 +92,43 @@ test(
       const metadata = await service.metadata(actorId, stored.object);
       assert.equal(metadata.size, body.length);
       assert.equal(metadata.mimeType, "text/plain");
+      const expiringUrl = await service.getSignedDownloadUrl(actorId, stored.object, 1);
+      await delay(2_100);
+      const expired = await fetch(expiringUrl, {
+        signal: AbortSignal.timeout(15_000),
+        redirect: "error",
+        headers: { "cache-control": "no-cache" },
+      });
+      assert.equal(expired.ok, false, "Expired signed access must be denied.");
+      await expired.body?.cancel();
     } finally {
-      if (stored) await service.delete(actorId, stored.object);
+      if (stored) {
+        await service.delete(actorId, stored.object);
+        await assert.rejects(service.metadata(actorId, stored.object), (error) => {
+          return error.code === "STORAGE_PROVIDER_FAILURE" && [400, 404].includes(error.status);
+        });
+        // Supabase versions may return HTTP 400 for missing metadata. Independently
+        // confirm that the unique verification prefix contains no objects.
+        const listing = await fetch(
+          `${configuration.storage.supabaseUrl}/storage/v1/object/list/${encodeURIComponent(configuration.storage.bucket)}`,
+          {
+            method: "POST",
+            signal: AbortSignal.timeout(15_000),
+            redirect: "error",
+            headers: {
+              apikey: configuration.storage.serviceRoleKey,
+              authorization: `Bearer ${configuration.storage.serviceRoleKey}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              prefix: stored.object.key.slice(0, stored.object.key.lastIndexOf("/")),
+              limit: 2,
+            }),
+          },
+        );
+        assert.equal(listing.ok, true, "Cleanup verification must succeed.");
+        assert.deepEqual(await listing.json(), [], "No temporary object may remain.");
+      }
     }
   },
 );
