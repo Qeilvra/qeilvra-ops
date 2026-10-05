@@ -1,6 +1,6 @@
 # TASK-170 — Notification model
 
-Status: REVIEW pending actual PostgreSQL verification.
+Status: DONE.
 Assessment: 5 October 2026.
 
 ## Objective and implementation
@@ -49,11 +49,14 @@ paired entity metadata, read-state storage, restrictive deletion and RLS configu
 No test sends messages or accesses production identities. The local full gate
 passed: 68 unit/integration tests, three startup checks, eighteen desktop/tablet/mobile
 browser tests, build, lint, format, typecheck and zero known vulnerabilities.
-Actual hosted SQL verification is pending for this migration.
+The [hosted run](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37347519561)
+passed the complete gate and actual SQL migration/notification integrity checks.
+Nine live database/Redis checks passed; the established cloud-storage test was
+explicitly skipped. Configured server secrets were absent from hosted logs.
 
 ## Blockers, debt and follow-up
 
-REVIEW until the actual database and full gate pass. Actual notification delivery
+No notification-model blocker remains. Actual notification delivery
 requires approved recipients/events, authenticated entity access, provider settings
 and event producers; those specific workflows remain BLOCKED. Transactional
 outbox/queue handoff and audited delivery/retry outcomes belong to TASK-172.

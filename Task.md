@@ -1511,9 +1511,9 @@ Quotation
 
 ## TASK-170 — Notification Model
 
-Status: REVIEW — in-app/email notification records, recipient ownership,
-read state and deduplication storage implemented; pending actual PostgreSQL
-verification. See `docs/verification/task-170.md`.
+Status: DONE — in-app/email notification records, recipient ownership,
+read state and deduplication storage passed actual hosted PostgreSQL verification.
+See `docs/verification/task-170.md`.
 
 Support:
 

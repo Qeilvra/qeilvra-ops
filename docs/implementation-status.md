@@ -13,8 +13,8 @@ quality gate. TASK-030: DONE, customer model/contact ownership and real SQL chec
 passed in [hosted CI](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37343170184).
 No new migration has been run on Supabase.
 
-TASK-170 is independently under REVIEW: Phase 1 notification records and actual
-disposable PostgreSQL tests are prepared without selecting recipients or sending
+TASK-170 is DONE: Phase 1 notification records and actual
+disposable PostgreSQL tests passed without selecting recipients or sending
 messages. TASK-171/TASK-172 remain BLOCKED on authenticated entity/event policy
 and verified provider delivery. This is model work, not a completed notification module.
 
@@ -107,8 +107,8 @@ Hosted runs additionally exercised real migrations and PostgreSQL/Redis. Storage
 remains separately verified foundation infrastructure; hosted tests intentionally
 skip cloud storage rather than load production credentials.
 
-New migrations 0002/0003 were only applied to disposable PostgreSQL; notification
-migration 0004 is pending its disposable SQL verification. Migration 0001's
+New migrations 0002–0004 were only applied to disposable PostgreSQL, including
+the notification checks in hosted run 37347519561. Migration 0001's
 checksum is preserved. Identity/user grants resolve in one parameterized indexed
 query with the existing pool. No business APIs, implicit super-admin authority,
 browser server secrets, provider accounts or production grants were introduced.
@@ -128,8 +128,11 @@ testing remain incomplete. No whole-product performance/security approval is cla
 
 ### Technical debt and readiness
 
-Confirm role/object policy, initial identity provisioning, reset origin/SMTP and
-session policy before completing protected flows. Establish least-privilege API
+The owner approved the Phase 1 role matrix, engineer assignment scope, final
+Super Admin protection, configurable bootstrap identity, localhost development
+callbacks and a temporary provider test account. Authentication work can proceed;
+production bootstrap credentials and SMTP delivery still require local setup.
+Establish least-privilege API
 DB credentials and approve deployment of new migrations. Repair Docker Desktop's
 read-only image store for convenient local service verification; hosted verification
 provides actual SQL evidence meanwhile. Unstarted modules, restore procedures,

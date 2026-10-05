@@ -116,6 +116,13 @@ startup checks, six browser checks and audit with no known vulnerabilities.
 
 ## Technical debt and follow-up
 
+Migration portability follow-up, 5 October 2026: forced Git checkouts with
+`core.autocrlf=true` changed SQL bytes and checksums. The scoped `.gitattributes`
+rule now preserves LF for database migrations. A regression test performs actual
+Windows and Unix checkout conversions and verifies every migration checksum.
+Both settings preserve all four existing checksums, including the deployed
+0001 migration. No existing SQL or recorded ledger checksum was changed.
+
 Closeout local gate: `pnpm check` passed all ten production builds, lint,
 formatting, strict workspace/tooling types, 64 unit/integration tests, three
 startup checks, six browser checks and the dependency audit. Separate
