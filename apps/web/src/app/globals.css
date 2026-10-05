@@ -9,6 +9,27 @@
   --app-border: #d7e1e5;
 }
 
+.ui-preview {
+  width: min(1100px, 100%);
+  margin-inline: auto;
+  padding: 24px;
+}
+.ui-preview__form {
+  display: grid;
+  gap: 16px;
+  max-width: 520px;
+}
+.ui-preview__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+.ui-preview__states {
+  display: grid;
+  gap: 16px;
+}
+
 * {
   box-sizing: border-box;
 }

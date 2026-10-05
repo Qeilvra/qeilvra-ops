@@ -11,10 +11,10 @@ exist as embedded sections of `prd.md`; those sections were also read at their
 respective positions. File names differ in case on this Windows workspace.
 The original specifications are preserved.
 
-The complete initial repository contains those eight Markdown files only.
-There is no application code, Git repository, dependency manifest, database,
-service, helper, component, test, or infrastructure to reuse or refactor.
-All Phase 1 functionality remains unimplemented.
+The initial repository contained those eight Markdown files only. That historical
+assessment no longer describes the current workspace: TASK-001–008 now provide
+the existing applications, configuration, typed PostgreSQL pool/migrations, queue,
+private storage, quality gate and hosted CI. Preserve that working foundation.
 
 The direct user requirements and confirmed memory take precedence over
 embedded examples. Use Airmech One as the product name and Built by Qeilvra as
@@ -23,14 +23,17 @@ takes precedence over differing design token examples. The numbered phases
 in `Task.md` are delivery stages within product Phase 1; they do not authorize
 inventory, procurement, customer portal, or other product Phase 2 work.
 
-## Current task: TASK-001
+## Current work: Phase 1 continuation
 
-Status: DONE after installation, build, test, quality, and independent review.
-See [verification evidence](verification/task-001.md). The next READY task is TASK-002.
+Foundation TASK-001–008 is complete; there is no TASK-009. The next batch is
+TASK-010–017. Independent model/role work and TASK-023 shared UI are under review;
+approved role/object policy and actual identity provisioning block protected
+workflows. See [current status and prerequisites](implementation-status.md).
 
-Create the documented pnpm workspace with three applications and five shared
-packages. Keep the applications honestly limited to startup/liveness and a
-branded startup page until subsequent tasks implement protected workflows.
+TASK-001 created the documented pnpm workspace with three applications and five
+shared packages; subsequent infrastructure tasks added queue/storage packages.
+Applications remain limited to verified capabilities until protected workflows
+are actually implemented. The following records the historical foundation scope.
 
 - Owner: repository foundation, with API, worker, and web process boundaries.
 - Database impact: no schema, migration, seed, business record, or production connection.

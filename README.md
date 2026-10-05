@@ -7,7 +7,8 @@ Operations Management System for Airmech Oman. Built by **Qeilvra**.
 TASK-001 through TASK-004 establish the monorepo and validated configuration.
 TASK-005 through TASK-008 add PostgreSQL, queue, private storage, and CI scaffolding.
 Live private Supabase Storage and hosted GitHub CI acceptance passed.
-Live PostgreSQL acceptance remains blocked by database CA trust configuration.
+Live Supabase PostgreSQL acceptance passed with trusted CA verification,
+connection reuse and checksum-verified infrastructure migrations.
 This is a startup foundation; authentication and protected
 business modules have not started.
 The startup screen contains no fabricated operational data.
@@ -187,6 +188,18 @@ The local storage bucket is private and verified. TASK-010 remains unstarted.
 The embedded documents are used because the original repository has no
 standalone `FEATURES.md`, `WORKFLOWS.md`, or `ROADMAP.md`. Confirmed memory and
 the user's explicit requirements take priority over illustrative embedded copies.
+
+## Shared UI verification
+
+Start `pnpm dev:web` and open `/ui-preview` to exercise the shared controls,
+dialogs, tabs and desktop table/mobile card presentation. This route contains
+explicit component specimens, creates no business records and grants no account
+access. Run `pnpm test:browser` for desktop/tablet/mobile interaction checks.
+
+The profile/RBAC migration is currently verified through disposable PostgreSQL
+tests before deployment. Do not run pending application migrations against the
+real Supabase project until the production access/provisioning policy is approved.
+See [implementation status](docs/implementation-status.md) for prerequisites.
 
 ## Tooling references
 

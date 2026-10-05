@@ -1,4 +1,6 @@
 export type ServiceName = "api" | "worker";
+export { hasPermission } from "./access";
+export type { UserStatus, UserProfile, AccessPrincipal } from "./access";
 
 /** Process liveness only; this does not assert database, storage, or queue readiness. */
 export interface HealthResponse {

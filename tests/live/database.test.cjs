@@ -58,7 +58,7 @@ test(
     const failing = [
       ...migrations,
       {
-        name: "0002_test_rollback.sql",
+        name: "9999_test_rollback.sql",
         checksum: "test-only",
         sql: "CREATE TABLE airmech_infrastructure.rollback_probe (id integer); SELECT missing_test_function();",
       },

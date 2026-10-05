@@ -246,14 +246,14 @@ Never expose secrets to frontend code.
 
 ## TASK-005 — PostgreSQL
 
-**Status:** BLOCKED
+**Status:** DONE
 
-Live closeout on 5 October 2026: DATABASE_URL is configured locally. Real
-Supabase connection fails strict TLS with SELF_SIGNED_CERT_IN_CHAIN before
-authentication. Supply the project's downloaded CA through DATABASE_CA_FILE;
-TLS/query/pool/migration acceptance remains unverified. No remote DDL or data
-mutation occurred. Existing lazy pg pool, migrations and browser boundaries
-are preserved. Evidence: docs/verification/task-005.md.
+Real Supabase acceptance passed on 5 October 2026 with the supplied trusted CA:
+strict TLS, safe typed queries, backend reuse, infrastructure migration application,
+zero-change replay and exact ledger checksum verification. Live database tests and
+server/browser boundary checks passed. Credentials and CA remain ignored locally;
+no authentication or business tables were created. Evidence:
+docs/verification/task-005.md.
 
 Set up:
 
@@ -325,14 +325,17 @@ tests
 build
 ```
 
-There is no TASK-009. TASK-010 is next after TASK-005's remaining live database
-acceptance passes. No authentication or business module was started.
+There is no TASK-009. TASK-010 is the next planned task after the completed
+infrastructure batch. No authentication or business module was started.
 
 ---
 
 # 7. Phase 1 — Authentication & Users
 
 ## TASK-010 — User Model
+
+Status: REVIEW — model, typed repository and real disposable DB tests implemented;
+pending SQL verification. See `docs/verification/task-010.md`.
 
 Create:
 
@@ -345,6 +348,9 @@ Create:
 ---
 
 ## TASK-011 — Roles
+
+Status: REVIEW — eight role records and relations implemented without grants;
+pending SQL verification. See `docs/verification/task-011.md`.
 
 Create:
 
@@ -362,6 +368,9 @@ Store
 ---
 
 ## TASK-012 — Permissions
+
+Status: BLOCKED — permission catalog and deny-by-default checks are prepared;
+approved role grants and object visibility/ownership are not confirmed.
 
 Examples:
 
@@ -388,6 +397,10 @@ admin.users
 
 ## TASK-013 — Login
 
+Status: BLOCKED — Supabase Auth is the assessed identity provider; controlled
+identity provisioning, deployment/session policy and real login verification
+remain unavailable. No substitute authentication system was created.
+
 Implement:
 
 - login
@@ -400,6 +413,9 @@ Implement:
 
 ## TASK-014 — Password Reset
 
+Status: BLOCKED — approved redirect origin, email/reset provider configuration
+and a controlled identity are required for actual recovery verification.
+
 Include:
 
 - secure reset token
@@ -409,6 +425,9 @@ Include:
 ---
 
 ## TASK-015 — User Administration
+
+Status: BLOCKED — first-administrator provisioning and permitted role assignment,
+role management and account administration require the approved access policy.
 
 Admin can:
 
@@ -421,6 +440,10 @@ Admin can:
 
 ## TASK-016 — Authorization Guards
 
+Status: BLOCKED — explicit permission/object checks deny by default; authenticated
+identity integration and approved object policies are required before protected
+endpoints can be completed.
+
 Backend must enforce all protected actions.
 
 Frontend permission checks are for UX only.
@@ -428,6 +451,10 @@ Frontend permission checks are for UX only.
 ---
 
 ## TASK-017 — Authentication Audit
+
+Status: BLOCKED — append-only audit storage is prepared; actual login/reset,
+disable and role-change event producers depend on the blocked authentication
+and administration flows.
 
 Track:
 
@@ -444,6 +471,9 @@ ROLE_CHANGED
 # 8. Phase 2 — Application Shell
 
 ## TASK-020 — Desktop Layout
+
+Status: BLOCKED — shared UI can proceed; actual authenticated user menu,
+role-aware workspace navigation and protected search require TASK-012–016.
 
 Build:
 
@@ -462,6 +492,9 @@ Follow `DESIGN.md`.
 
 ## TASK-021 — Mobile Navigation
 
+Status: BLOCKED — role-aware mobile navigation requires the approved access
+policy and current authenticated profile. Mobile shared controls proceed separately.
+
 Build mobile-specific navigation.
 
 Recommended:
@@ -479,6 +512,9 @@ Do NOT simply collapse desktop sidebar.
 ---
 
 ## TASK-022 — Responsive Layout System
+
+Status: BLOCKED — responsive shared controls are implemented; integration of the
+actual desktop/mobile protected shell depends on TASK-020–021.
 
 Support:
 
@@ -500,6 +536,11 @@ Mobile must use:
 ---
 
 ## TASK-023 — Shared UI Components
+
+Status: DONE — documented controls, overlays, tabs, states and bounded table/card
+presentation verified. Full quality gate passed, including desktop/tablet/mobile
+browser interaction tests. See
+`docs/verification/task-023.md`.
 
 Create:
 
