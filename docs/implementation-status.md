@@ -6,10 +6,12 @@ product Phase 2. Task numbers describe delivery stages within Phase 1.
 
 ## Current independent work
 
-TASK-010/TASK-011: profile/role migration and typed repository drafted, with real
-disposable PostgreSQL tests. REVIEW until migration and repository verification
-pass. TASK-023: DONE, real shared controls and browser specimens verified by the
-corrected full quality gate. No new migration has been run on Supabase.
+TASK-010/TASK-011: DONE. The profile/role migration and typed repository passed
+real disposable PostgreSQL checks in [hosted CI](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37341781398).
+TASK-023: DONE, real shared controls and browser specimens verified by the full
+quality gate. TASK-030: REVIEW, customer model/contact ownership storage and
+real SQL tests prepared; local quality gate passed and hosted verification is
+pending. No new migration has been run on Supabase.
 
 ## Decisions that block protected workflows
 
@@ -48,6 +50,12 @@ no competing password/JWT issuer, automatic admin or business endpoint yet.
 Before login implementation, record the deployment origin/proxy/session/CSRF
 design and verify actual provider settings and controlled test identities. Do
 not change provider accounts or create a first administrator from an assumption.
+
+Provider references: [server-side identity/session verification](https://supabase.com/docs/guides/auth/server-side/advanced-guide),
+[session revocation](https://supabase.com/docs/guides/auth/sessions),
+[reset redirects](https://supabase.com/docs/guides/auth/redirect-urls) and
+[production SMTP configuration](https://supabase.com/docs/guides/auth/auth-smtp).
+These support the provider assessment; they do not establish Airmech's access policy.
 
 ## Verification environment
 

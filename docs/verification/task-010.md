@@ -1,6 +1,6 @@
 # TASK-010 — User model
 
-Status: REVIEW pending disposable PostgreSQL verification. Assessed 5 October 2026.
+Status: DONE. Assessed 5 October 2026.
 
 ## Objective and implementation
 
@@ -47,11 +47,15 @@ run in a real transaction and roll back. Cloud mutation is prohibited by the tes
 
 Local TypeScript compilation and the 66 unit/integration tests passed. Local Docker
 could not create its services: its image store reported a read-only filesystem.
-Hosted disposable PostgreSQL verification is pending; no migration success is claimed.
+The [hosted quality run](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37341781398)
+passed its complete quality gate, migration application and actual PostgreSQL/Redis
+tests. Identity fixtures verified constraints, role resolution, disabled state,
+immediate grant removal, RLS configuration and rejection of audit mutation.
+The hosted logs contain no configured server secrets. The cloud database is unchanged.
 
 ## Blockers, debt and follow-up
 
-Complete real disposable database verification before DONE. Production rollout,
+No user-model verification blocker remains. Production rollout,
 least-privilege API database credentials, approved role grants, first-user
 provisioning and the Supabase login/reset configuration remain separate work.
 Keep the original infrastructure migration checksum unchanged.

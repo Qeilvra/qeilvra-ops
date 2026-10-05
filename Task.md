@@ -334,8 +334,8 @@ infrastructure batch. No authentication or business module was started.
 
 ## TASK-010 — User Model
 
-Status: REVIEW — model, typed repository and real disposable DB tests implemented;
-pending SQL verification. See `docs/verification/task-010.md`.
+Status: DONE — model, typed repository and real disposable PostgreSQL tests passed
+in hosted CI. See `docs/verification/task-010.md`.
 
 Create:
 
@@ -349,8 +349,8 @@ Create:
 
 ## TASK-011 — Roles
 
-Status: REVIEW — eight role records and relations implemented without grants;
-pending SQL verification. See `docs/verification/task-011.md`.
+Status: DONE — eight role records and relations verified in actual hosted
+PostgreSQL, without implicit grants. See `docs/verification/task-011.md`.
 
 Create:
 
@@ -573,6 +573,9 @@ Avoid duplicate components.
 
 ## TASK-030 — Customer Model
 
+Status: REVIEW — documented fields and primary-contact ownership modeled;
+pending actual disposable PostgreSQL verification. See `docs/verification/task-030.md`.
+
 Fields:
 
 - company name
@@ -585,6 +588,9 @@ Fields:
 ---
 
 ## TASK-031 — Customer CRUD
+
+Status: BLOCKED — authenticated APIs, approved customer visibility/ownership
+and customer-code assignment policy are required before protected writes.
 
 Implement:
 
@@ -599,11 +605,17 @@ Avoid destructive permanent deletion by default.
 
 ## TASK-032 — Customer Contacts
 
+Status: BLOCKED — contact ownership storage is prepared as part of TASK-030;
+actual administration requires the approved customer access policy and authentication.
+
 Multiple contacts per customer.
 
 ---
 
 ## TASK-033 — Customer Sites
+
+Status: BLOCKED — contact/site visibility and authorized customer operations
+depend on TASK-012–016 and the approved customer access policy.
 
 Each customer can have multiple sites.
 
@@ -618,6 +630,9 @@ Fields:
 ---
 
 ## TASK-034 — Customer List
+
+Status: BLOCKED — requires actual permission-filtered customer API data;
+shared table/mobile-card and pagination controls are verified under TASK-023.
 
 Desktop:
 
@@ -636,6 +651,9 @@ Never load all customers at once.
 ---
 
 ## TASK-035 — Customer 360
+
+Status: BLOCKED — requires protected, integrated customer/contact/site and related
+module APIs; component specimens do not count as a Customer 360 implementation.
 
 Show:
 

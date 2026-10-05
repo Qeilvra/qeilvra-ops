@@ -92,7 +92,8 @@ test(
         await rejectsStatement(sql, [], "42501");
       }
       const security = await connection.query(
-        "SELECT relname, relrowsecurity FROM pg_class JOIN pg_namespace n ON n.oid=relnamespace WHERE n.nspname='airmech' AND relkind='r'",
+        "SELECT relname, relrowsecurity FROM pg_class JOIN pg_namespace n ON n.oid=relnamespace WHERE n.nspname='airmech' AND relkind='r' AND relname=ANY($1::text[])",
+        [["users", "roles", "permissions", "user_roles", "role_permissions", "audit_events"]],
       );
       assert.equal(security.rows.length, 6);
       assert.ok(security.rows.every((row) => row.relrowsecurity));

@@ -1,6 +1,6 @@
 # TASK-011 — Roles
 
-Status: REVIEW pending disposable PostgreSQL verification. Assessed 5 October 2026.
+Status: DONE. Assessed 5 October 2026.
 
 ## Objective and implementation
 
@@ -28,11 +28,13 @@ pending the approved role/object-access policy, tracked under TASK-012/TASK-015.
 
 `pnpm check`; `pnpm db:migrate`; explicitly opted-in disposable `pnpm test:live`.
 Local compilation and permission unit tests passed. Docker's read-only image store
-prevented local SQL verification. Hosted PostgreSQL verification is pending.
+prevented local SQL verification. The [hosted run](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37341781398)
+passed actual PostgreSQL role/repository, migration history and rollback tests,
+the complete quality gate and live Redis tests. Logs contained no configured secrets.
 
 ## Results, blockers and technical debt
 
-REVIEW until actual migration, constraints and repository tests pass against
-disposable PostgreSQL. Role grants and administration are not claimed complete.
+Migration, constraints and repository tests passed against disposable PostgreSQL.
+Role grants and administration are not claimed complete.
 The new migration has not been applied to Supabase. Least-privilege production
 database grants must be established before deploying protected modules.
