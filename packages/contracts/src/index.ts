@@ -2,6 +2,7 @@ export type ServiceName = "api" | "worker";
 export { hasPermission } from "./access";
 export type { UserStatus, UserProfile, AccessPrincipal } from "./access";
 export type { CustomerProfile } from "./customer";
+export type { NotificationRecord } from "./notification";
 
 /** Process liveness only; this does not assert database, storage, or queue readiness. */
 export interface HealthResponse {

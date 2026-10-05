@@ -1511,6 +1511,10 @@ Quotation
 
 ## TASK-170 — Notification Model
 
+Status: REVIEW — in-app/email notification records, recipient ownership,
+read state and deduplication storage implemented; pending actual PostgreSQL
+verification. See `docs/verification/task-170.md`.
+
 Support:
 
 ```text
@@ -1529,6 +1533,9 @@ SMS
 
 ## TASK-171 — Notification Center
 
+Status: BLOCKED — requires authenticated recipient-scoped APIs, approved entity
+visibility and real event producers; model fixtures are not actual notifications.
+
 Features:
 
 - unread
@@ -1539,6 +1546,9 @@ Features:
 ---
 
 ## TASK-172 — Notification Worker
+
+Status: BLOCKED — approved recipient/event policy, email-provider configuration
+and integrated business events are required for verified asynchronous delivery.
 
 Do not send notifications synchronously from business requests.
 

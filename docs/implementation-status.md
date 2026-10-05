@@ -13,6 +13,11 @@ quality gate. TASK-030: DONE, customer model/contact ownership and real SQL chec
 passed in [hosted CI](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37343170184).
 No new migration has been run on Supabase.
 
+TASK-170 is independently under REVIEW: Phase 1 notification records and actual
+disposable PostgreSQL tests are prepared without selecting recipients or sending
+messages. TASK-171/TASK-172 remain BLOCKED on authenticated entity/event policy
+and verified provider delivery. This is model work, not a completed notification module.
+
 ## Decisions that block protected workflows
 
 The source documents explicitly leave these unconfirmed. Questions have been
@@ -102,12 +107,19 @@ Hosted runs additionally exercised real migrations and PostgreSQL/Redis. Storage
 remains separately verified foundation infrastructure; hosted tests intentionally
 skip cloud storage rather than load production credentials.
 
-New migrations 0002/0003 were only applied to disposable PostgreSQL; 0001's
+New migrations 0002/0003 were only applied to disposable PostgreSQL; notification
+migration 0004 is pending its disposable SQL verification. Migration 0001's
 checksum is preserved. Identity/user grants resolve in one parameterized indexed
 query with the existing pool. No business APIs, implicit super-admin authority,
 browser server secrets, provider accounts or production grants were introduced.
 Audit records reject update/delete/truncate. Additional regression coverage
 verifies actual RLS denial to a non-owner role even with SELECT privileges.
+
+The [mutation-safety and RLS run](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37345038843)
+passed at implementation commit `2988374`: 68 unit/integration, three startup,
+eighteen browser and eight live PostgreSQL/Redis checks. One cloud-storage test
+was explicitly skipped by the established hosted environment. Configured server
+secrets were absent from its logs.
 
 Shared UI adds no dependency; bounded table/card pages, native fields/dialogs,
 system fonts and static specimen routes preserve the current startup behavior.
