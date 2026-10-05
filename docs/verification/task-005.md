@@ -1,7 +1,7 @@
 # TASK-005 verification
 
 Objective: PostgreSQL via Supabase infrastructure without domain tables or auth.
-Status: BLOCKED for real Supabase connectivity; local foundation implemented.
+Status: DONE after real Supabase PostgreSQL and strict TLS verification.
 Verified on 5 October 2026. TASK-010 remains outside this batch.
 
 ## Implementation and files
@@ -71,30 +71,48 @@ BullMQ's supported JavaScript path passed all queue checks.
 
 ## Results and blockers
 
-Closeout verification on 5 October 2026 loaded the actual ignored local environment.
-DATABASE_URL and the server key are now configured; the historical missing-secret
-blocker is resolved. The typed pool attempted the real project connection and
-returned its redacted DATABASE_UNAVAILABLE error. A diagnostic pool using the
-same strict TLS settings identified SELF_SIGNED_CERT_IN_CHAIN before database
-authentication. No credential, raw provider message, or connection string was logged.
+Live acceptance resumed on 5 October 2026 using only the ignored local .env.
+The supplied certificate was saved as secrets/prod-ca-2021.crt rather than the
+stated secrets/supabase-ca.crt. Its X.509 CA status and validity were checked
+without printing contents, and DATABASE_CA_FILE was corrected locally to the
+existing file. The user's secrets/ ignore rule and .env ignore were preserved.
 
-TASK-005 remains BLOCKED: DATABASE_CA_FILE is unset and the Supabase database CA
-is not trusted by the current driver. Obtain the certificate from the project's
-[Database Settings SSL configuration](https://supabase.com/docs/guides/platform/ssl-enforcement)
-and supply its local PEM path through the existing DATABASE_CA_FILE setting.
-Attempts to obtain the public CA from the official download endpoint did not
-succeed. Certificate verification was never disabled. DNS currently returns
-an IPv6 direct endpoint; confirm connectivity after the CA is supplied, or use
-the project's documented session pooler if IPv6 is unavailable.
+The existing typed DatabaseClient connected to the actual Supabase database.
+Remote pool settings retained rejectUnauthorized=true with the supplied CA.
+pg_stat_ssl confirmed ssl=true. Parameterized SELECT, current_database(),
+current_user and version() succeeded; outputs were reduced to success booleans.
+Sequential queries on the same client returned the same backend PID, confirming
+connection reuse. The existing five-connection lazy pool, bounded timeouts,
+shutdown lifecycle and lack of startup-query loops remain unchanged.
 
-The existing live PostgreSQL test was run explicitly with DATABASE_ENABLED=true
-and ENV_FILE pointing at local .env: its safe-query test failed connection,
-and its loopback-only mutation test was intentionally skipped. TLS, safe SQL,
-real-project pool reuse, migration ledger and checksum verification therefore
-remain unverified. No remote DDL, reset, schema deletion or data mutation occurred.
-The test now asserts pg_stat_ssl.ssl for successful remote connections.
-Local import/export and environment-secret boundary checks remain in the full gate.
-The existing migration runner and read-only development seed were preserved.
+The migration ledger was initially absent. After reviewing the existing single
+infrastructure-only SQL file, the existing applyMigrations runner applied one
+migration and replay applied zero. The persisted ledger name and SHA-256 checksum
+match the version-controlled migration exactly. No authentication/business table,
+reset, dropped schema or business-data deletion was performed. An intermediate
+diagnostic validated schema/ledger permissions inside a rolled-back transaction.
+Two initial CLI attempts failed with the existing redacted error; subsequent
+runner application, replay and actual pnpm db:migrate/db:verify commands passed.
+No TLS or timeout policy was weakened to obtain success.
+
+The existing live test passed: one safe-query/pooling/TLS test, zero failures.
+The loopback-only disposable mutation test was intentionally skipped; cloud
+rollback-failure and checksum-tampering tests were not enabled. Those destructive
+test scenarios remain covered by the existing disposable CI database checks.
+Scoped database/environment/import integration tests passed, proving API/worker
+access and browser rejection remain correct. Configured server secrets were not
+found in tracked/staged files or generated browser assets. TASK-005 has no
+remaining acceptance blocker. TASK-010 was not started.
+
+Commands: explicit local ENV_FILE with DATABASE_ENABLED=true for pnpm db:migrate,
+pnpm db:verify, development-only pnpm db:seed and node --test tests/live/database.test.cjs;
+the seed verified connectivity without inserting any records. Scoped node --test
+for tests/unit/database.test.cjs, tests/integration/infrastructure.test.cjs and
+tests/integration/environment.test.cjs. Safe ignored verification helpers checked
+the certificate, typed pool, TLS and read-only ledger state without logging secrets.
+The scoped suite passed all 15 tests. The resumed full pnpm check gate also passed:
+ten builds, lint, formatting, strict types, 64 unit/integration tests, three
+startup checks, six browser checks and audit with no known vulnerabilities.
 
 ## Technical debt and follow-up
 
@@ -106,9 +124,9 @@ staged files and generated browser assets found none of the configured local
 server secrets; `.env` remains ignored. The live database failure is reported
 separately and is not suppressed by the successful offline gate.
 
-Supply the selected non-production runtime/direct connection settings and CA
-when needed; run `db:verify`, then explicitly review/apply the migration. Record
-provider acceptance before marking DONE. Tune aggregate pool budgets when replica
+Maintain trusted CA configuration for each deployment; keep runtime and migration
+credentials server-only and prefer a least-privileged application role in production.
+Tune aggregate pool budgets when replica
 counts and Supabase limits are confirmed. Backups/restore belong to TASK-220+.
 The workspace lacks `docs/verification/task-004.md`; its stale task status is
 outside this batch and was not rewritten as verified history.
