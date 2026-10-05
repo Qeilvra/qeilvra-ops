@@ -40,6 +40,9 @@ test(
       assert.equal(principal.user.status, "invited");
       assert.deepEqual(principal.permissions, []);
       await connection.query("UPDATE airmech.users SET status='active' WHERE id=$1", [userId]);
+      // This transaction deliberately removes the approved baseline to prove role names
+      // themselves confer no authority. ROLLBACK restores all approved grants.
+      await connection.query("DELETE FROM airmech.role_permissions WHERE role_code='super_admin'");
       await connection.query("INSERT INTO airmech.user_roles VALUES ($1,'super_admin')", [userId]);
       principal = await repository.findPrincipal(identityId);
       assert.deepEqual(principal.roles, ["super_admin"]);

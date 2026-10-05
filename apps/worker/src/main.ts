@@ -5,6 +5,8 @@ import {
 } from "@airmech/config/server";
 import { once } from "node:events";
 import { DatabaseClient } from "@airmech/database";
+import { startAuthMessageWorker } from "@airmech/queue";
+import { createAuthMessageProcessor } from "./auth-message-processor";
 
 import { createWorkerServer } from "./health-server";
 import { startQueueRuntime } from "./queue-runtime";
@@ -26,6 +28,22 @@ async function bootstrap(): Promise<void> {
       process.exitCode = 1;
     });
   });
+  const authMessages =
+    configuration.auth.enabled && configuration.redis.enabled && database
+      ? startAuthMessageWorker(
+          configuration.redis,
+          createAuthMessageProcessor(configuration, database),
+          {
+            onEvent: (event) =>
+              process.stderr.write(`${JSON.stringify({ service: "worker", ...event })}\n`),
+            onUnavailable: () => {
+              shutdown(1).catch(() => {
+                process.exitCode = 1;
+              });
+            },
+          },
+        )
+      : null;
 
   function shutdown(exitCode = 0): Promise<void> {
     if (exitCode !== 0) process.exitCode = exitCode;
@@ -42,6 +60,7 @@ async function bootstrap(): Promise<void> {
     try {
       const results = await Promise.allSettled([
         queue.close(),
+        authMessages?.close(),
         database?.close(),
         server.listening
           ? new Promise<void>((resolve, reject) => {
@@ -65,6 +84,7 @@ async function bootstrap(): Promise<void> {
 
   try {
     await queue.ready();
+    await authMessages?.ready();
     if (closing) {
       await closing;
       return;
@@ -87,7 +107,7 @@ async function bootstrap(): Promise<void> {
       environment: settings.environment,
       healthPath: "/health",
       mode: queue.enabled ? "infrastructure" : "foundation",
-      activeProcessors: queue.enabled ? 1 : 0,
+      activeProcessors: (queue.enabled ? 1 : 0) + (authMessages ? 1 : 0),
     })}\n`,
   );
 }

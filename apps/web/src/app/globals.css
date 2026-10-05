@@ -9,6 +9,137 @@
   --app-border: #d7e1e5;
 }
 
+.auth-page {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  border-top: 6px solid var(--app-teal);
+}
+.auth-panel {
+  width: min(100%, 440px);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  padding: 28px;
+  display: grid;
+  gap: 24px;
+}
+.auth-panel form {
+  display: grid;
+  gap: 18px;
+}
+.workspace-header {
+  background: var(--app-navy);
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 3px solid var(--app-teal);
+}
+.workspace-account {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.workspace-body {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: calc(100svh - 90px);
+}
+.workspace-sidebar {
+  background: var(--app-surface);
+  border-right: 1px solid var(--app-border);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.workspace-sidebar a,
+.workspace-mobile-nav a {
+  min-height: 44px;
+  padding: 12px;
+  text-decoration: none;
+  font-weight: 600;
+}
+.workspace-main {
+  padding: 24px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.workspace-profile {
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  background: var(--app-surface);
+  padding: 24px;
+}
+.workspace-profile dl {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.workspace-profile dt {
+  color: var(--app-text-secondary);
+  font-size: 12px;
+}
+.workspace-mobile-nav {
+  display: none;
+}
+.admin-form {
+  display: grid;
+  gap: 16px;
+}
+.admin-role-choices {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 639px) {
+  .auth-page {
+    padding: 16px;
+    align-items: start;
+  }
+  .auth-panel {
+    margin-top: 24px;
+    padding: 20px;
+  }
+  .workspace-header {
+    padding: 12px 16px;
+  }
+  .workspace-account > span {
+    display: none;
+  }
+  .workspace-body {
+    display: block;
+  }
+  .workspace-sidebar {
+    display: none;
+  }
+  .workspace-main {
+    padding: 20px 16px 100px;
+  }
+  .workspace-mobile-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--app-surface);
+    border-top: 1px solid var(--app-border);
+    padding-bottom: env(safe-area-inset-bottom);
+    justify-content: space-around;
+  }
+}
+
 .ui-preview {
   width: min(1100px, 100%);
   margin-inline: auto;

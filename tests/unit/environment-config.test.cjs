@@ -20,6 +20,7 @@ const enabledEnvironment = Object.freeze({
   REDIS_URL: "rediss://test_user:fake_value@redis.example.invalid:6380/0",
   AUTH_ENABLED: "true",
   AUTH_SECRET: "a".repeat(32),
+  APP_URL: "https://app.example.invalid",
   STORAGE_ENABLED: "true",
   SUPABASE_URL: "https://storage.example.invalid",
   SUPABASE_ANON_KEY: "fake-anon-key",

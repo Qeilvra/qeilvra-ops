@@ -16,6 +16,7 @@ export interface AccessPrincipal {
   readonly user: UserProfile;
   readonly roles: readonly string[];
   readonly permissions: readonly string[];
+  readonly rolePermissions?: Readonly<Record<string, readonly string[]>>;
 }
 
 /** Role names carry no implicit authority, including super_admin. */

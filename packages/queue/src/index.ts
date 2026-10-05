@@ -19,3 +19,11 @@ export { SystemQueueProducer } from "./producer";
 export type { SystemQueueProducerOptions } from "./producer";
 export { processSystemJob, startSystemQueueWorker } from "./worker";
 export type { HealthcheckProcessor, SystemQueueWorker, SystemQueueWorkerOptions } from "./worker";
+export {
+  AUTH_MESSAGE_JOB,
+  AUTH_MESSAGE_QUEUE,
+  AuthMessageProducer,
+  processAuthMessageJob,
+  startAuthMessageWorker,
+} from "./auth-messages";
+export type { AuthMessageData, AuthMessageProcessor } from "./auth-messages";

@@ -1,4 +1,5 @@
 import { createApiErrorResponse } from "@airmech/contracts";
+import { DatabaseError } from "@airmech/database";
 import { type ArgumentsHost, Catch, type ExceptionFilter, HttpException } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import type { ServerResponse } from "node:http";
@@ -72,6 +73,13 @@ const BODY_PARSER_ERROR_STATUSES: ReadonlyMap<string, number> = new Map([
 ]);
 
 function resolveExceptionStatus(exception: unknown): number {
+  if (exception instanceof DatabaseError) {
+    return exception.code === "DATABASE_CONFLICT"
+      ? 409
+      : exception.code === "DATABASE_INVALID_REQUEST"
+        ? 400
+        : 503;
+  }
   if (exception instanceof HttpException) {
     const status = exception.getStatus();
     return Number.isInteger(status) && status >= 400 && status <= 599 ? status : 500;

@@ -7,6 +7,7 @@ const browserForbidden = new Set([
   "database",
   "queue",
   "storage",
+  "identity",
   "config",
   "testing",
   "api",
@@ -56,7 +57,10 @@ function isForbidden(source, filename) {
   const importedPackage = packageName(source);
   if ((web || ui) && browserForbidden.has(importedPackage)) return true;
   if (contracts && contractForbidden.has(importedPackage)) return true;
-  if (config && ["database", "queue", "storage", "ui", "api", "worker"].includes(importedPackage))
+  if (
+    config &&
+    ["database", "queue", "storage", "identity", "ui", "api", "worker"].includes(importedPackage)
+  )
     return true;
 
   if (web || ui || contracts) {
@@ -83,6 +87,7 @@ function isForbidden(source, filename) {
   if ((web || ui || contracts || config) && inPackage("database")) return true;
   if ((web || ui || contracts || config) && (inPackage("queue") || inPackage("storage")))
     return true;
+  if ((web || ui || contracts || config) && inPackage("identity")) return true;
   if ((web || ui || contracts) && (inPackage("config") || inPackage("testing"))) return true;
   if ((contracts || config) && inPackage("ui")) return true;
   if ((ui || contracts || config) && target.startsWith("apps/")) return true;

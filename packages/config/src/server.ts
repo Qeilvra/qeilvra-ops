@@ -33,11 +33,20 @@ export interface DatabaseConfiguration extends UrlConfiguration {
   readonly caFile: string | null;
 }
 
+export interface AuthConfiguration {
+  readonly enabled: boolean;
+  readonly secret: string | null;
+  readonly appUrl: string | null;
+  readonly sessionSeconds: number | null;
+  readonly bootstrapEmail: string | null;
+  readonly bootstrapName: string | null;
+}
+
 export interface ServerConfiguration {
   readonly runtime: RuntimeSettings;
   readonly database: DatabaseConfiguration;
   readonly redis: UrlConfiguration;
-  readonly auth: Readonly<{ enabled: boolean; secret: string | null }>;
+  readonly auth: AuthConfiguration;
   readonly storage: Readonly<{
     enabled: boolean;
     supabaseUrl: string | null;
@@ -122,11 +131,55 @@ export function readServerConfiguration(
   const authEnabled = readFlag(environment, "AUTH_ENABLED");
   const authSecret = readSecret(environment, "AUTH_SECRET", 32);
   requireSetting(authEnabled, authSecret, "AUTH_SECRET");
+  const appUrl = readUrl(environment, "APP_URL", ["http:", "https:"]);
+  if (appUrl !== null) {
+    const parsed = new URL(appUrl);
+    if (
+      parsed.pathname !== "/" ||
+      parsed.search ||
+      (parsed.protocol !== "https:" &&
+        !["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname))
+    ) {
+      throw new ConfigurationError("APP_URL");
+    }
+  }
+  requireSetting(authEnabled, appUrl, "APP_URL");
+  const sessionText = readText(environment, "AUTH_SESSION_SECONDS");
+  const sessionSeconds = sessionText === null ? (authEnabled ? 28_800 : null) : Number(sessionText);
+  if (
+    sessionText !== null &&
+    (!/^\d+$/.test(sessionText) ||
+      !Number.isSafeInteger(sessionSeconds) ||
+      Number(sessionSeconds) < 300 ||
+      Number(sessionSeconds) > 86_400)
+  ) {
+    throw new ConfigurationError("AUTH_SESSION_SECONDS");
+  }
+  const bootstrapEmail = readText(environment, "BOOTSTRAP_ADMIN_EMAIL", 320);
+  const bootstrapName = readText(environment, "BOOTSTRAP_ADMIN_NAME", 120);
+  if (bootstrapEmail !== null && !/^[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+$/.test(bootstrapEmail)) {
+    throw new ConfigurationError("BOOTSTRAP_ADMIN_EMAIL");
+  }
+  if ((bootstrapEmail === null) !== (bootstrapName === null))
+    throw new ConfigurationError("BOOTSTRAP_ADMIN_NAME");
 
   const storageEnabled = readFlag(environment, "STORAGE_ENABLED");
   const supabaseUrl = readUrl(environment, "SUPABASE_URL", ["http:", "https:"]);
   const anonKey = readSecret(environment, "SUPABASE_ANON_KEY");
   const serviceRoleKey = readSecret(environment, "SUPABASE_SERVICE_ROLE_KEY");
+  requireSetting(authEnabled, supabaseUrl, "SUPABASE_URL");
+  requireSetting(authEnabled, anonKey, "SUPABASE_ANON_KEY");
+  requireSetting(authEnabled, serviceRoleKey, "SUPABASE_SERVICE_ROLE_KEY");
+  if (authEnabled && !database.enabled) throw new ConfigurationError("DATABASE_ENABLED");
+  if (supabaseUrl !== null && authEnabled && new URL(supabaseUrl).pathname !== "/")
+    throw new ConfigurationError("SUPABASE_URL");
+  if (
+    supabaseUrl !== null &&
+    authEnabled &&
+    new URL(supabaseUrl).protocol !== "https:" &&
+    !["localhost", "127.0.0.1", "[::1]"].includes(new URL(supabaseUrl).hostname)
+  )
+    throw new ConfigurationError("SUPABASE_URL");
   const storageSecret = readSecret(environment, "STORAGE_SECRET");
   const bucket = readText(environment, "STORAGE_BUCKET", 63);
   if (bucket !== null && !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(bucket)) {
@@ -172,7 +225,14 @@ export function readServerConfiguration(
     runtime,
     database,
     redis,
-    auth: Object.freeze({ enabled: authEnabled, secret: authSecret }),
+    auth: Object.freeze({
+      enabled: authEnabled,
+      secret: authSecret,
+      appUrl,
+      sessionSeconds,
+      bootstrapEmail,
+      bootstrapName,
+    }),
     storage: Object.freeze({
       enabled: storageEnabled,
       supabaseUrl,
@@ -191,6 +251,22 @@ export function readServerConfiguration(
     whatsapp: Object.freeze({ enabled: whatsappEnabled, token: whatsappToken }),
     ai: Object.freeze({ enabled: aiEnabled, apiKey: aiApiKey }),
   });
+}
+
+/** Build/server-only reverse-proxy destination; never part of the browser config. */
+export function readWebGatewayConfiguration(environment: EnvironmentInput): {
+  readonly apiUrl: string;
+} {
+  const apiUrl =
+    readUrl(environment, "API_INTERNAL_URL", ["http:", "https:"]) ?? "http://127.0.0.1:3001";
+  const parsed = new URL(apiUrl);
+  if (
+    parsed.pathname !== "/" ||
+    parsed.search ||
+    (parsed.protocol !== "https:" && !["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname))
+  )
+    throw new ConfigurationError("API_INTERNAL_URL");
+  return Object.freeze({ apiUrl: parsed.origin });
 }
 
 function readUrlConfiguration(
