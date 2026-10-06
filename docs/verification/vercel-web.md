@@ -61,8 +61,19 @@ formatting, strict workspace/tooling types, 79 unit/integration tests, three
 compiled startup checks, 52 browser checks and zero known dependency advisories.
 The final configuration, preserving Vercel's automatic installation detection,
 also passed clean app-root installation/build, all four workflow assertions and
-the complete local gate. No live Vercel deployment is claimed by the local
-checks; hosted CI results are recorded separately when available.
+the complete local gate.
+
+[Hosted CI run 37480003997](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37480003997)
+passed for implementation commit `93ce943d4f3d86a25529834b8c608ce6944d68c5`.
+Every step succeeded, including locked installation, the clean app-root web
+build, the complete quality gate, and actual disposable PostgreSQL/Redis checks.
+
+GitHub reports the Vercel preview for that commit as failed. The deployment's
+private metadata/log endpoints reject unauthenticated reads (HTTP 403), so no
+live Vercel success is claimed. The owner confirmed Root Directory `apps/web`,
+Next.js, Node 24.x, the documented build command, outside-root sources enabled
+and Corepack enabled. The exact remaining Vercel error is requested before any
+additional change; the deployment settings alone do not identify its cause.
 
 ## Deployment settings and limits
 
