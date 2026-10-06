@@ -11,14 +11,18 @@ file imports `@airmech/config/server`, whose package export points to generated
 checkout does not compile that package and fails with `MODULE_NOT_FOUND`.
 
 No Turborepo dependency/configuration is present. The root `build:web` command
-reuses pnpm's existing dependency-ordered build orchestration, filtered to
-`@airmech/web...`. `apps/web/vercel.json` invokes it from the configured app root.
-The app still runs `next build`; no source aliases, package exports, compiler
+reuses pnpm's existing dependency-ordered build orchestration, filtered to the
+dependency-only selector `@airmech/web^...`, followed by web's raw `build:next`
+script. `apps/web/vercel.json` invokes it from the configured app root. The
+default app `build` script calls the same root orchestration, covering Vercel
+deployments whose logs still show `pnpm run build`. The app still runs `next build`;
+no source aliases, package exports, compiler
 settings, runtime routes, credentials or committed generated outputs changed.
 
 Files:
 
 - `package.json`: filtered root `build:web` script.
+- `apps/web/package.json`: safe default wrapper and separate raw `build:next` script.
 - `apps/web/vercel.json`: workspace-aware build command; installation detection preserved.
 - `.github/workflows/ci.yml`: app-root filtered build before the complete gate.
 - `tests/integration/ci.test.cjs`: verify the Vercel/CI build command and ordering.
@@ -34,7 +38,7 @@ moved, no artifact is copied into tracked files, and no database is touched.
 Verified:
 
 1. All app/package `dist` directories and web build caches were absent.
-2. `pnpm run build` from `apps/web` reproduced the missing config server module.
+2. Direct `pnpm exec next build` from `apps/web` reproduced the missing config server module.
    On Windows the reported path uses the workspace symlink under
    `apps/web/node_modules/@airmech/config/dist/server.js`; its target is the same
    missing generated package export as the Vercel failure.
@@ -46,6 +50,9 @@ Verified:
    routes. `packages/config/dist/server.js` and the web `.next/BUILD_ID` exist.
 5. Only config, contracts, UI and web were built. Database, identity, queue,
    storage, testing, API and worker generated outputs remained absent.
+6. After clearing generated outputs a second time, the default app-root
+   `pnpm run build` succeeded through the same root orchestration. The root
+   invokes the raw Next script separately, avoiding recursive wrapper calls.
 
 Detailed clean-build logs and prior outputs are ignored under `.cache/vercel-web`.
 
@@ -63,17 +70,23 @@ The final configuration, preserving Vercel's automatic installation detection,
 also passed clean app-root installation/build, all four workflow assertions and
 the complete local gate.
 
-[Hosted CI run 37480003997](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37480003997)
+The first implementation's
+[hosted CI run 37480003997](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37480003997)
 passed for implementation commit `93ce943d4f3d86a25529834b8c608ce6944d68c5`.
 Every step succeeded, including locked installation, the clean app-root web
 build, the complete quality gate, and actual disposable PostgreSQL/Redis checks.
 
-GitHub reports the Vercel preview for that commit as failed. The deployment's
+GitHub reported the Vercel preview for that first commit as failed. The deployment's
 private metadata/log endpoints reject unauthenticated reads (HTTP 403), so no
 live Vercel success is claimed. The owner confirmed Root Directory `apps/web`,
 Next.js, Node 24.x, the documented build command, outside-root sources enabled
-and Corepack enabled. The exact remaining Vercel error is requested before any
-additional change; the deployment settings alone do not identify its cause.
+and Corepack enabled. The supplied failure log still invoked the old direct
+app build (`pnpm run build` → `next build`) without dependency compilation.
+The default build wrapper now covers that entry point too. Its custom and
+default commands both passed independently from clean artifacts; the complete
+local gate also passed with 79 unit/integration, three startup and 52 browser
+checks plus build/lint/format/types/audit. Hosted verification of this follow-up
+is recorded after publication.
 
 ## Deployment settings and limits
 

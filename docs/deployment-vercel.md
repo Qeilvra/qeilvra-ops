@@ -51,18 +51,26 @@ pnpm --dir ../.. run build:web
 The root script runs:
 
 ```sh
-pnpm --filter "@airmech/web..." --fail-if-no-match --sort run build
+pnpm --filter "@airmech/web^..." --fail-if-no-match --sort run build
+pnpm --filter @airmech/web --fail-if-no-match run build:next
 ```
 
-pnpm selects `@airmech/web` and its transitive workspace dependencies and builds
-dependencies before consumers. The current selection is config, contracts, UI
-and web. Config compilation creates `packages/config/dist/server.js` before
-Next.js evaluates `next.config.ts`. Backend database/identity/queue/storage,
-API and worker builds are outside this filtered target.
+The first command selects only the app's transitive workspace dependencies:
+config, contracts and UI. After they finish in dependency order, the second
+command selects web and runs its `build:next` script (`next build`). Config
+compilation creates `packages/config/dist/server.js` before Next.js evaluates
+`next.config.ts`. Backend database/identity/queue/storage, API and worker builds
+are outside this target.
+
+The ordinary `apps/web` build script also calls `pnpm --dir ../.. run build:web`.
+Thus a Vercel invocation of `pnpm run build` still builds dependencies first.
+The root orchestration calls `build:next`, not the wrapper `build`, so it never
+recurses into itself. For local builds from `apps/web`, use `pnpm build` rather
+than bypassing the wrapper with `next build` or `build:next`.
 
 This reuses the existing pnpm build orchestration. There is no Turborepo setup
 or new build dependency. Package exports, browser/server import boundaries,
-TypeScript settings, application routes and the app's `next build` script stay
+TypeScript settings, application routes and the underlying `next build` stay
 intact. `dist` and `.next` remain generated, ignored artifacts.
 
 The selector and dependency ordering follow
@@ -92,8 +100,9 @@ direct-Next build regression cannot be hidden by the full build.
 Local clean verification moves existing app/package `dist`, `.next` and
 TypeScript build-info outputs into an ignored, uniquely named workspace cache,
 confirms their absence, reproduces the original direct-Next failure, and then
-executes the committed Vercel command from `apps/web`. It confirms only the web
-dependency closure is rebuilt before running the existing full `pnpm check`.
+executes the committed Vercel command from `apps/web`. It then clears generated
+outputs again and verifies the default app `pnpm run build` also succeeds. Both
+paths rebuild only the web dependency closure before the full `pnpm check`.
 
 Current results and limits are recorded in
 [the Vercel build verification](verification/vercel-web.md).

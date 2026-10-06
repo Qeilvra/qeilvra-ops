@@ -13,7 +13,7 @@
     "dev:api": "pnpm --filter @airmech/api dev",
     "dev:worker": "pnpm --filter @airmech/worker dev",
     "build": "pnpm -r --sort run build",
-    "build:web": "pnpm --filter \"@airmech/web...\" --fail-if-no-match --sort run build",
+    "build:web": "pnpm --filter \"@airmech/web^...\" --fail-if-no-match --sort run build && pnpm --filter @airmech/web --fail-if-no-match run build:next",
     "build:packages": "pnpm --filter \"./packages/**\" --sort run build",
     "typecheck": "pnpm run build:packages && pnpm run typecheck:workspace",
     "typecheck:workspace": "pnpm -r --sort run typecheck && tsc -p tsconfig.tools.json",

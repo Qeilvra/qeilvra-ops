@@ -12,6 +12,9 @@ const manifest = JSON.parse(fs.readFileSync(path.join(workspace, "package.json")
 const webDeployment = JSON.parse(
   fs.readFileSync(path.join(workspace, "apps/web/vercel.json"), "utf8"),
 );
+const webManifest = JSON.parse(
+  fs.readFileSync(path.join(workspace, "apps/web/package.json"), "utf8"),
+);
 
 function runStep(command) {
   const steps = workflow.jobs.quality.steps.filter((step) => step.run === command);
@@ -87,8 +90,24 @@ test("CI installs once from the lockfile and reuses the project's complete quali
     "Preserve Vercel's existing workspace/package-manager detection",
   );
   assert.equal(webDeployment.buildCommand, "pnpm --dir ../.. run build:web");
-  assert.match(manifest.scripts["build:web"], /--filter\s+"@airmech\/web\.\.\."/);
-  assert.match(manifest.scripts["build:web"], /--sort\s+run build$/);
+  assert.match(
+    manifest.scripts["build:web"],
+    /--filter\s+"@airmech\/web\^\.\.\.".*--sort\s+run build\s+&&/,
+  );
+  assert.match(
+    manifest.scripts["build:web"],
+    /--filter @airmech\/web --fail-if-no-match run build:next$/,
+  );
+  assert.equal(
+    webManifest.scripts.build,
+    webDeployment.buildCommand,
+    "Vercel's default app build must also build workspace dependencies",
+  );
+  assert.equal(
+    webManifest.scripts["build:next"],
+    "next build",
+    "The root command must call raw Next separately without recursing into the wrapper",
+  );
   assert.doesNotMatch(manifest.scripts["build:web"], /--parallel|--no-sort|--if-present/);
   const setup = steps.find((step) => step.uses?.startsWith("pnpm/action-setup@"));
   assert.equal(setup.with.run_install, false);
