@@ -48,7 +48,10 @@ test(
       ]);
       async function rejectsStatement(sql, values, errorCode) {
         await connection.query("SAVEPOINT expected_failure");
-        await assert.rejects(connection.query(sql, values), { code: errorCode });
+        await assert.rejects(connection.query(sql, values), (error) => {
+          assert.ok((Array.isArray(errorCode) ? errorCode : [errorCode]).includes(error.code));
+          return true;
+        });
         await connection.query("ROLLBACK TO SAVEPOINT expected_failure");
         await connection.query("RELEASE SAVEPOINT expected_failure");
       }
@@ -62,7 +65,12 @@ test(
         [code],
         "23505",
       );
-      await rejectsStatement("DELETE FROM airmech.customers WHERE id=$1", [customerId], "23503");
+      // PostgreSQL 18 distinguishes RESTRICT violations from missing foreign keys.
+      await rejectsStatement(
+        "DELETE FROM airmech.customers WHERE id=$1",
+        [customerId],
+        ["23503", "23001"],
+      );
       await rejectsStatement(
         "UPDATE airmech.customers SET archived_at=now() WHERE id=$1",
         [customerId],

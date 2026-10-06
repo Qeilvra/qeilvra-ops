@@ -33,6 +33,7 @@ export default defineConfig({
     launchOptions: executablePath ? { executablePath } : {},
   },
   projects: [
+    { name: "wide", use: { viewport: { width: 1920, height: 1080 } } },
     { name: "desktop", use: { viewport: { width: 1440, height: 900 } } },
     { name: "tablet", use: { viewport: { width: 768, height: 1024 } } },
     {

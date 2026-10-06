@@ -75,3 +75,40 @@ test(
     }
   },
 );
+
+test(
+  "restricted deletion returns a safe database conflict on supported PostgreSQL versions",
+  {
+    skip:
+      process.env.INFRASTRUCTURE_TEST_DATABASE_MUTATIONS !== "true"
+        ? "Conflict regression requires an opted-in disposable database"
+        : false,
+  },
+  async () => {
+    assertDisposableDatabase(configuration);
+    const database = new DatabaseClient(configuration);
+    try {
+      await assert.rejects(
+        database.transaction(async (transaction) => {
+          await transaction.query(
+            "CREATE TEMP TABLE audit_conflict_parent(id integer PRIMARY KEY)",
+          );
+          await transaction.query(
+            "CREATE TEMP TABLE audit_conflict_child(parent_id integer REFERENCES audit_conflict_parent(id) ON DELETE RESTRICT)",
+          );
+          await transaction.query("INSERT INTO audit_conflict_parent VALUES(1)");
+          await transaction.query("INSERT INTO audit_conflict_child VALUES(1)");
+          await transaction.query("DELETE FROM audit_conflict_parent WHERE id=1");
+        }),
+        (error) => {
+          assert.equal(error.code, "DATABASE_CONFLICT");
+          assert.equal("cause" in error, false);
+          assert.equal(error.message.includes("audit_conflict_parent"), false);
+          return true;
+        },
+      );
+    } finally {
+      await database.close();
+    }
+  },
+);

@@ -25,10 +25,12 @@ inventory, procurement, customer portal, or other product Phase 2 work.
 
 ## Current work: Phase 1 continuation
 
-Foundation TASK-001–008 is complete; there is no TASK-009. The next batch is
-TASK-010–017. Independent model/role work and TASK-023 shared UI are under review;
-approved role/object policy and actual identity provisioning block protected
-workflows. See [current status and prerequisites](implementation-status.md).
+Reconciliation on 6 October 2026 verifies foundation TASK-001–008 and current
+authentication/authorization/navigation/model work. All 133 formal tasks now
+have explicit evidence-based states; there is no TASK-009. Roles, real provider
+recovery/invitation delivery and the complete shell still have acceptance gaps.
+See [current totals](implementation-status.md) and
+[the complete reconciliation](verification/full-reconciliation.md).
 
 TASK-001 created the documented pnpm workspace with three applications and five
 shared packages; subsequent infrastructure tasks added queue/storage packages.
@@ -78,8 +80,10 @@ service instead of writing another module's private state.
 
 ## Decisions awaiting confirmation
 
-Before implementing the affected behavior, confirm role permission grants and
-object visibility/ownership; quotation approval hierarchy; complaint intake,
+Role permission grants, engineer scope, localhost callbacks and customer
+Service Manager/Project Manager operational rules are confirmed in decisions
+012 and 013. Enforce actual trusted record/field relationships when implementing
+the affected modules. Still confirm quotation approval hierarchy; complaint intake,
 priority/SLA/calendars; warranty rules and override authority; AMC frequency and
 renewal policies; service report format; historical migration sources/volume;
 production infrastructure/region; backup ownership, retention, RPO and RTO.

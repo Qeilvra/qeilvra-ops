@@ -164,6 +164,30 @@ test("opaque cookies reject duplicate or malformed tokens and recovery envelopes
   assert.throws(() => new RecoveryCipher("different-test-secret").open(encrypted));
 });
 
+test("HTTPS application sessions use host-only Secure cookies and disable response caching", async () => {
+  const { AuthService } = await import("../../apps/api/dist/modules/auth/auth.service.js");
+  const auth = new AuthService(
+    readServerConfiguration("api", { APP_URL: "https://app.example.invalid" }),
+    null,
+  );
+  const headers = new Map();
+  const response = {
+    getHeader: (name) => headers.get(name),
+    setHeader: (name, value) => headers.set(name, value),
+  };
+  try {
+    assert.equal(auth.sessionCookie, "__Host-airmech_session");
+    auth.cookie(response, auth.sessionCookie, newSessionToken(), 300);
+    const cookie = headers.get("Set-Cookie")[0];
+    for (const attribute of ["Path=/", "HttpOnly", "SameSite=Lax", "Max-Age=300", "Secure"])
+      assert.ok(cookie.includes(attribute));
+    assert.equal(cookie.includes("Domain="), false);
+    assert.equal(headers.get("Cache-Control"), "no-store");
+  } finally {
+    await auth.onApplicationShutdown();
+  }
+});
+
 test("auth configuration rejects remote plaintext origins, misplaced Supabase paths and unsafe session durations", () => {
   const base = {
     AUTH_ENABLED: "true",

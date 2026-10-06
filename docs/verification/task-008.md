@@ -132,3 +132,34 @@ caching, pinned actions, bounded job/service timeouts and failure propagation.
 Branch-protection administration is a later repository-management action.
 Service images use explicit supported version lines; optional digest pinning and
 reviewed action upgrades remain documented maintenance. TASK-010 was not started.
+
+---
+
+## Reconciliation — 6 October 2026
+
+Current status: **DONE**. Previous tracker state: DONE.
+
+### Objective and implementation evidence
+
+CI Pipeline. Workflow structure and deterministic frozen install/quality/disposable-service steps verified. Prior hosted passing runs retained; latest hosted result is recorded separately, without claiming unpushed changes passed remotely.
+
+Files inspected:
+
+- `.github/workflows/ci.yml`
+- `tests/integration/ci.test.cjs`
+
+### Migrations, security and performance
+
+No migration was changed or applied to cloud during this audit. Existing infrastructure boundaries were reviewed. Current implemented scope was reviewed; representative production latency and future business security acceptance remain separate.
+
+### Tests, commands and results
+
+Current reconciliation runs the established `pnpm check` gate and standalone test/type commands, real disposable `pnpm test:live`, read-only cloud checks and the expressly approved temporary Supabase identity lifecycle. Exact commands, category totals, exceptions and environment separation are recorded in [the full reconciliation](full-reconciliation.md#test-totals). Passing shared checks do not close the remaining gap stated above.
+
+Historical commands/results above were verified previously and were not fabricated or relabeled as this run.
+
+### Remaining acceptance, blockers and technical debt
+
+Workflow structure and deterministic frozen install/quality/disposable-service steps verified. Prior hosted passing runs retained; latest hosted result is recorded separately, without claiming unpushed changes passed remotely.
+
+No remaining acceptance gap for this task’s stated scope. Production rollout, business modules and realistic-scale release acceptance are separate tasks.

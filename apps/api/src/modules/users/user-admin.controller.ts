@@ -34,8 +34,12 @@ export class UserAdministrationController {
 
   @Get("users")
   @RequireAccess("user.read", "security")
-  list(@Query("page") page: string = "1", @Query("search") search: string = "") {
-    return this.users.list(/^\d+$/.test(page) ? Number(page) : NaN, search);
+  list(
+    @Query("page") page: string = "1",
+    @Query("search") search: string = "",
+    @Query("status") status: string = "",
+  ) {
+    return this.users.list(/^\d+$/.test(page) ? Number(page) : NaN, search, status);
   }
 
   @Get("roles")

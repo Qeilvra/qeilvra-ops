@@ -1,8 +1,10 @@
 # Background job infrastructure
 
 `@airmech/queue` is a server package used by API producers and worker consumers.
-Its only registered job is `system.healthcheck`; it creates no business behavior
-and exposes no HTTP endpoint. Browser exports are disabled.
+It registers `system.healthcheck` and `auth.deliver_message`. Auth jobs carry only
+an encrypted-delivery record ID; provider tokens and mail payloads are not queued.
+General business notifications/schedules remain unimplemented. The package
+exposes no HTTP endpoint. Browser exports are disabled.
 
 Set `REDIS_ENABLED=true` and supply `REDIS_URL` through
 `@airmech/config/server`. Use `rediss://` for a remote TLS service and a protected

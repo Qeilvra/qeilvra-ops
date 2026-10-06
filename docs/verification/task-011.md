@@ -1,6 +1,9 @@
 # TASK-011 — Roles
 
-Status: DONE. Assessed 5 October 2026.
+Current reconciliation status: **REVIEW**, 6 October 2026. Role activation and
+deactivation are absent. The following model-only acceptance record is historical.
+
+Historical model status: DONE. Assessed 5 October 2026.
 
 ## Objective and implementation
 
@@ -38,3 +41,35 @@ Migration, constraints and repository tests passed against disposable PostgreSQL
 Role grants and administration are not claimed complete.
 The new migration has not been applied to Supabase. Least-privilege production
 database grants must be established before deploying protected modules.
+
+---
+
+## Reconciliation — 6 October 2026
+
+Current status: **REVIEW**. Previous tracker state: DONE.
+
+### Objective and implementation evidence
+
+Roles. Eight stable approved lower-case role codes, names, grants and replay are verified. Role-level active/inactive state required by this audit is absent; add and verify lifecycle enforcement before DONE. Historical model-only DONE is narrower.
+
+Files inspected:
+
+- `packages/database/migrations/0002_identity_access.sql`
+- `packages/database/migrations/0005_authorization_sessions.sql`
+- `tests/live/identity-access.test.cjs`
+
+### Migrations, security and performance
+
+Identity/RBAC/session work uses migrations 0002 and 0005. All five existing SQL files applied and replayed on disposable PostgreSQL; immutable checksums were retained. Cloud ledger still contains only 0001. Current APIs check sessions, active profiles and server grants, use bounded queries, private cookies and safe errors.
+
+### Tests, commands and results
+
+Current reconciliation runs the established `pnpm check` gate and standalone test/type commands, real disposable `pnpm test:live`, read-only cloud checks and the expressly approved temporary Supabase identity lifecycle. Exact commands, category totals, exceptions and environment separation are recorded in [the full reconciliation](full-reconciliation.md#test-totals). Passing shared checks do not close the remaining gap stated above.
+
+Historical commands/results above were verified previously and were not fabricated or relabeled as this run.
+
+### Remaining acceptance, blockers and technical debt
+
+Eight stable approved lower-case role codes, names, grants and replay are verified. Role-level active/inactive state required by this audit is absent; add and verify lifecycle enforcement before DONE. Historical model-only DONE is narrower.
+
+Do not mark DONE until the task-specific gap is implemented and verified. Approved role/customer/callback decisions must not be reinstated as missing-policy blockers.

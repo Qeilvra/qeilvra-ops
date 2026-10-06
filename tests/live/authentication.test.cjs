@@ -113,6 +113,32 @@ test(
         "login denies invalid credentials, anonymous/disabled/expired sessions and foreign origins",
         async () => {
           assert.equal((await request("/auth/me")).status, 401);
+          const unmapped = fixture.account(
+            `${randomUUID()}@example.invalid`,
+            "fixture-unmapped-password",
+          );
+          assert.equal(
+            (
+              await request("/auth/login", {
+                method: "POST",
+                body: { email: unmapped.email, password: unmapped.password },
+              })
+            ).status,
+            401,
+          );
+          assert.equal(
+            (
+              await request("/auth/login", {
+                method: "POST",
+                body: {
+                  email: engineer.email,
+                  password: engineer.password,
+                  roles: ["super_admin"],
+                },
+              })
+            ).status,
+            400,
+          );
           assert.equal(
             (
               await request("/auth/login", {
@@ -160,7 +186,38 @@ test(
         async () => {
           assert.equal((await request("/admin/users", { cookie: managerCookie })).status, 200);
           assert.equal((await request("/admin/roles", { cookie: managerCookie })).status, 200);
+          const disabledPage = await request("/admin/users?status=disabled", {
+            cookie: managerCookie,
+          });
+          assert.equal(disabledPage.status, 200);
+          const filtered = await disabledPage.json();
+          assert.ok(filtered.items.length > 0 && filtered.items.length <= 25);
+          assert.ok(filtered.items.every((user) => user.status === "disabled"));
+          assert.equal(
+            (await request("/admin/users?status=unknown", { cookie: managerCookie })).status,
+            400,
+          );
           assert.equal((await request("/admin/users", { cookie: engineerCookie })).status, 403);
+          assert.equal(
+            (
+              await request(`/admin/users/${engineer.userId}/roles`, {
+                method: "POST",
+                cookie: engineerCookie,
+                body: { roles: ["super_admin"] },
+              })
+            ).status,
+            403,
+          );
+          assert.equal(
+            (
+              await request(`/admin/users/${engineer.userId}/roles`, {
+                method: "POST",
+                cookie: adminCookie,
+                body: { roles: ["unknown_role"] },
+              })
+            ).status,
+            400,
+          );
           assert.equal(
             (
               await request(`/admin/users/${engineer.userId}/roles`, {

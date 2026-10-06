@@ -59,3 +59,36 @@ No user-model verification blocker remains. Production rollout,
 least-privilege API database credentials, approved role grants, first-user
 provisioning and the Supabase login/reset configuration remain separate work.
 Keep the original infrastructure migration checksum unchanged.
+
+---
+
+## Reconciliation — 6 October 2026
+
+Current status: **DONE**. Previous tracker state: DONE.
+
+### Objective and implementation evidence
+
+User Model. User identity linkage, active/invited/disabled state, constraints, indexed repository and live SQL integrity passed; no password duplication.
+
+Files inspected:
+
+- `packages/database/migrations/0002_identity_access.sql`
+- `apps/api/src/modules/users/user.repository.ts`
+- `packages/contracts/src/access.ts`
+- `tests/live/identity-access.test.cjs`
+
+### Migrations, security and performance
+
+Identity/RBAC/session work uses migrations 0002 and 0005. All five existing SQL files applied and replayed on disposable PostgreSQL; immutable checksums were retained. Cloud ledger still contains only 0001. Current APIs check sessions, active profiles and server grants, use bounded queries, private cookies and safe errors.
+
+### Tests, commands and results
+
+Current reconciliation runs the established `pnpm check` gate and standalone test/type commands, real disposable `pnpm test:live`, read-only cloud checks and the expressly approved temporary Supabase identity lifecycle. Exact commands, category totals, exceptions and environment separation are recorded in [the full reconciliation](full-reconciliation.md#test-totals). Passing shared checks do not close the remaining gap stated above.
+
+Historical commands/results above were verified previously and were not fabricated or relabeled as this run.
+
+### Remaining acceptance, blockers and technical debt
+
+User identity linkage, active/invited/disabled state, constraints, indexed repository and live SQL integrity passed; no password duplication.
+
+No remaining acceptance gap for this task’s stated scope. Production rollout, business modules and realistic-scale release acceptance are separate tasks.

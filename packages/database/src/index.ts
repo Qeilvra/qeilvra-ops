@@ -25,7 +25,8 @@ export class DatabaseError extends Error {
 
 function databaseFailure(error: unknown): DatabaseError {
   const state = typeof error === "object" && error !== null && "code" in error ? error.code : null;
-  if (state === "23505" || state === "23503") return new DatabaseError("DATABASE_CONFLICT");
+  if (state === "23505" || state === "23503" || state === "23001")
+    return new DatabaseError("DATABASE_CONFLICT");
   if (state === "23514" || state === "22P02") return new DatabaseError("DATABASE_INVALID_REQUEST");
   return new DatabaseError("DATABASE_UNAVAILABLE");
 }

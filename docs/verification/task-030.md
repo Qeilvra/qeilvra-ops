@@ -58,3 +58,35 @@ a substitute disposable environment. Customer CRUD, contact/site administration
 and permission-filtered lists remain blocked on approved access policy and
 authenticated APIs. Email/phone request validation and audit-producing writes
 belong to those actual operations; a database model does not complete them.
+
+---
+
+## Reconciliation — 6 October 2026
+
+Current status: **DONE**. Previous tracker state: DONE.
+
+### Objective and implementation evidence
+
+Customer Model. Customer fields, supplied-code uniqueness, contact ownership, archival integrity and RLS passed real SQL tests. CRUD/sites are separate incomplete tasks.
+
+Files inspected:
+
+- `packages/database/migrations/0003_customer_profiles.sql`
+- `packages/contracts/src/customer.ts`
+- `tests/live/customer-model.test.cjs`
+
+### Migrations, security and performance
+
+Migration 0003 customer/contact constraints, restrictive deletion and RLS were verified on real disposable PostgreSQL. Customer APIs and field policies do not exist yet.
+
+### Tests, commands and results
+
+Current reconciliation runs the established `pnpm check` gate and standalone test/type commands, real disposable `pnpm test:live`, read-only cloud checks and the expressly approved temporary Supabase identity lifecycle. Exact commands, category totals, exceptions and environment separation are recorded in [the full reconciliation](full-reconciliation.md#test-totals). Passing shared checks do not close the remaining gap stated above.
+
+Historical commands/results above were verified previously and were not fabricated or relabeled as this run.
+
+### Remaining acceptance, blockers and technical debt
+
+Customer fields, supplied-code uniqueness, contact ownership, archival integrity and RLS passed real SQL tests. CRUD/sites are separate incomplete tasks.
+
+No remaining acceptance gap for this task’s stated scope. Production rollout, business modules and realistic-scale release acceptance are separate tasks.

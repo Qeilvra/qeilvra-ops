@@ -187,5 +187,13 @@ export class SupabaseAuthProvider {
       { should_soft_delete: false },
       { admin: true, method: "DELETE" },
     );
+    // Verification tooling must confirm cleanup rather than infer it from DELETE.
+    try {
+      await this.#request(`/admin/users/${identityId}`, undefined, { admin: true });
+    } catch (error: unknown) {
+      if (error instanceof IdentityProviderError && error.status === 404) return;
+      throw error;
+    }
+    throw new IdentityProviderError("PROVIDER_UNAVAILABLE");
   }
 }

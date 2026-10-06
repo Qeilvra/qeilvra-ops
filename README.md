@@ -9,8 +9,11 @@ TASK-005 through TASK-008 add PostgreSQL, queue, private storage, and CI scaffol
 Live private Supabase Storage and hosted GitHub CI acceptance passed.
 Live Supabase PostgreSQL acceptance passed with trusted CA verification,
 connection reuse and checksum-verified infrastructure migrations.
-This is a startup foundation; authentication and protected
-business modules have not started.
+Authentication, server RBAC/session guards, user/role administration, shared UI,
+responsive workspace screens, customer/contact ownership and notification models
+are implemented to varying acceptance levels. Business operational modules remain
+largely unstarted. See [the full reconciliation](docs/verification/full-reconciliation.md)
+and [current task totals](docs/implementation-status.md); file existence is not completion.
 The startup screen contains no fabricated operational data.
 
 Read [the implementation assessment and plan](docs/implementation-plan.md) and
@@ -60,8 +63,9 @@ corepack pnpm dev:worker
 
 API/worker use `HOST`, `PORT`, and `NODE_ENV` for process settings and default
 to loopback in development. Health reports only that the process is alive;
-it does not assert database or storage readiness. The worker consumes only
-`system.healthcheck` when Redis is enabled, with no business jobs or schedules.
+it does not assert database or storage readiness. The worker consumes
+`system.healthcheck` when Redis is enabled and auth delivery records when auth,
+Redis and database are enabled. General business jobs/schedules remain unimplemented.
 
 Configuration is typed and validated once before startup. Local development
 loads the root `.env`; existing process variables take precedence. Production
@@ -137,7 +141,7 @@ Use `test:browser` to run Playwright through the owned-server runner; direct
 `playwright test` requires the runner's isolated base URL. The complete `check`
 command also requires an installed browser and network access for `audit`.
 
-All eight apps/packages expose `lint`, `typecheck`, `build`, and `format:check`.
+All eleven apps/packages expose `lint`, `typecheck`, `build`, and `format:check`.
 For example, `corepack pnpm --filter @airmech/api lint` isolates API lint errors.
 The web, API, and config package also expose their relevant `test` commands.
 Other packages are exercised by the root integration/startup suites rather
@@ -153,7 +157,8 @@ main with HTTPS origin for Qeilvra/qeilvra-ops. Hosted GitHub Actions has passed
 the frozen installation, complete gate, and disposable infrastructure checks.
 For remote PostgreSQL verification, configure DATABASE_CA_FILE with the project's
 trusted PEM certificate from Supabase Database Settings; do not disable TLS checks.
-The local storage bucket is private and verified. TASK-010 remains unstarted.
+The local storage bucket is private and verified. Current acceptance and remaining
+gaps for all 133 tasks are recorded in the reconciliation report.
 
 ## Workspace ownership
 
@@ -167,6 +172,7 @@ The local storage bucket is private and verified. TASK-010 remains unstarted.
 | `packages/database`  | Server-only PostgreSQL pooling and reviewed SQL migrations           |
 | `packages/queue`     | Server-only Redis/BullMQ producers, consumer and retry policy        |
 | `packages/storage`   | Server-only authorized private Supabase object operations            |
+| `packages/identity`  | Server-only Supabase Auth adapter and encrypted recovery envelopes   |
 | `packages/config`    | Shared strict TypeScript and process configuration                   |
 | `packages/testing`   | Reusable test assertions/helpers                                     |
 
@@ -198,7 +204,8 @@ access. Run `pnpm test:browser` for desktop/tablet/mobile interaction checks.
 
 The profile/RBAC migration is currently verified through disposable PostgreSQL
 tests before deployment. Do not run pending application migrations against the
-real Supabase project until the production access/provisioning policy is approved.
+real Supabase project until their rollout and production provisioning are explicitly
+approved. The role baseline is already approved; pending deployment is a separate decision.
 See [implementation status](docs/implementation-status.md) for prerequisites.
 
 ## Tooling references

@@ -1,7 +1,9 @@
 # PostgreSQL infrastructure
 
 PostgreSQL via Supabase uses the small `pg` driver, typed query results, and
-reviewed SQL migrations. No ORM or domain tables are introduced. See
+reviewed SQL migrations. Five migrations cover infrastructure, application
+profiles/RBAC/audit, customer/contact ownership, notification records and auth
+sessions/delivery. No competing ORM is introduced. See
 [the infrastructure decision](../../docs/decisions/005-infrastructure.md).
 
 API and worker own one `DatabaseClient` each. Construction opens no connection.
@@ -35,7 +37,7 @@ Migrations never run during API/worker startup. Runtime roles need no DDL rights
 
 The initial migration creates only a private infrastructure schema; the runner
 owns its migration ledger. `db:seed` is development-only and creates no records.
-It verifies connectivity because no domain entities exist yet.
+It verifies connectivity without creating users, grants or operational records.
 
 `pnpm test` tests config, TLS options, bounded failures and package boundaries
 without cloud access. `pnpm test:live` separately verifies enabled databases
@@ -43,6 +45,8 @@ read-only. Migration tests require both a disposable loopback DB and
 `INFRASTRUCTURE_TEST_DATABASE_MUTATIONS=true`; never enable this against shared
 data. Close every client on process shutdown.
 
-Real Supabase verification remains blocked until non-production credentials and
-any required project CA are configured. Disposable PostgreSQL results do not
-claim a cloud connection.
+Read-only Supabase TLS/query/pool/ledger verification passed on 6 October 2026.
+Only migration 0001 is deployed there; 0002–0005 remain pending approved rollout.
+All five migrations are verified on disposable PostgreSQL. See
+[the reconciliation](../../docs/verification/full-reconciliation.md) for current
+evidence; local SQL tests do not substitute for cloud deployment.

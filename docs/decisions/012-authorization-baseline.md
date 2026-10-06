@@ -20,7 +20,8 @@ data, audit logs or other engineers' jobs, assign engineers or close complaints.
 
 Management and Super Admin have the approved broad business access. Sales/Admin
 has commercial access and read-only customer/project/service status where granted.
-Service Manager has service access; customer-edit field limits remain unconfirmed.
+Service Manager has service access; customer-edit field limits were confirmed on
+6 October 2026 in [decision 013](013-customer-operational-access.md).
 Project Manager access is project-related. Accounts has commercial/financial read
 access. Store has relevant inventory/parts context only; Phase 2 inventory is not
 introduced. Ambiguous "limited", "relevant" and "project-related" operations

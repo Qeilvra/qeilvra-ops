@@ -112,3 +112,35 @@ processors need durable business idempotency. Business-transaction outbox
 delivery and queue monitoring will be introduced with the owning workflows.
 Performance at operational load remains a later release measurement.
 TASK-010 is the next planned group after this infrastructure batch; not started.
+
+---
+
+## Reconciliation — 6 October 2026
+
+Current status: **DONE**. Previous tracker state: DONE.
+
+### Objective and implementation evidence
+
+Redis / Job Queue. Real isolated Redis producer/consumer, compiled worker, retries, deduplication, retained failures and cleanup passed.
+
+Files inspected:
+
+- `packages/queue/src/*.ts`
+- `apps/worker/src/{main,queue-runtime}.ts`
+- `tests/live/queue.test.cjs`
+
+### Migrations, security and performance
+
+No migration was changed or applied to cloud during this audit. Existing infrastructure boundaries were reviewed. Current implemented scope was reviewed; representative production latency and future business security acceptance remain separate.
+
+### Tests, commands and results
+
+Current reconciliation runs the established `pnpm check` gate and standalone test/type commands, real disposable `pnpm test:live`, read-only cloud checks and the expressly approved temporary Supabase identity lifecycle. Exact commands, category totals, exceptions and environment separation are recorded in [the full reconciliation](full-reconciliation.md#test-totals). Passing shared checks do not close the remaining gap stated above.
+
+Historical commands/results above were verified previously and were not fabricated or relabeled as this run.
+
+### Remaining acceptance, blockers and technical debt
+
+Real isolated Redis producer/consumer, compiled worker, retries, deduplication, retained failures and cleanup passed.
+
+No remaining acceptance gap for this task’s stated scope. Production rollout, business modules and realistic-scale release acceptance are separate tasks.

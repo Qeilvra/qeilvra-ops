@@ -21,10 +21,24 @@ test(
     assertDisposableDatabase(configuration);
     await applyMigrations(configuration, await readMigrations());
     const { UserRepository } = await import("../../apps/api/dist/modules/users/user.repository.js");
+    const { ROLE_PERMISSION_BASELINE } =
+      await import("../../apps/api/dist/modules/auth/permission-baseline.js");
     const pool = new Pool({ ...databasePoolOptions(configuration), max: 1 });
     const connection = await pool.connect();
     try {
       await connection.query("BEGIN");
+      const approvedGrants = await connection.query(
+        "SELECT role_code, permission_code FROM airmech.role_permissions ORDER BY role_code, permission_code",
+      );
+      for (const [role, permissions] of Object.entries(ROLE_PERMISSION_BASELINE)) {
+        assert.deepEqual(
+          approvedGrants.rows
+            .filter((row) => row.role_code === role)
+            .map((row) => row.permission_code),
+          [...permissions].sort(),
+          `Persisted grants must match the approved baseline for ${role}`,
+        );
+      }
       // Real PostgreSQL transaction adapter: all generated fixtures roll back together.
       const repository = new UserRepository({
         query: async (sql, values) => (await connection.query(sql, values)).rows,

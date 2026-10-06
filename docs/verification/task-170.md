@@ -60,3 +60,35 @@ No notification-model blocker remains. Actual notification delivery
 requires approved recipients/events, authenticated entity access, provider settings
 and event producers; those specific workflows remain BLOCKED. Transactional
 outbox/queue handoff and audited delivery/retry outcomes belong to TASK-172.
+
+---
+
+## Reconciliation — 6 October 2026
+
+Current status: **DONE**. Previous tracker state: DONE.
+
+### Objective and implementation evidence
+
+Notification Model. Recipient/channel/read-state/deduplication schema passed real SQL integrity/RLS tests; it does not complete notification delivery.
+
+Files inspected:
+
+- `packages/database/migrations/0004_notifications.sql`
+- `packages/contracts/src/notification.ts`
+- `tests/live/notification-model.test.cjs`
+
+### Migrations, security and performance
+
+Migration 0004 notifications verifies recipient FK, channels, read state, deduplication and RLS on disposable PostgreSQL. No center/business event delivery is implied.
+
+### Tests, commands and results
+
+Current reconciliation runs the established `pnpm check` gate and standalone test/type commands, real disposable `pnpm test:live`, read-only cloud checks and the expressly approved temporary Supabase identity lifecycle. Exact commands, category totals, exceptions and environment separation are recorded in [the full reconciliation](full-reconciliation.md#test-totals). Passing shared checks do not close the remaining gap stated above.
+
+Historical commands/results above were verified previously and were not fabricated or relabeled as this run.
+
+### Remaining acceptance, blockers and technical debt
+
+Recipient/channel/read-state/deduplication schema passed real SQL integrity/RLS tests; it does not complete notification delivery.
+
+No remaining acceptance gap for this task’s stated scope. Production rollout, business modules and realistic-scale release acceptance are separate tasks.

@@ -1360,3 +1360,11 @@ Airmech One should reduce manual follow-up, improve operational visibility, pres
 ```
 
 **Difference:** `MEMORY.md` tells Codex **what we already know and what must not be assumed**. `PRD.md` tells it **what Airmech One must achieve as a product**.
+
+## Confirmed access decisions — 6 October 2026
+
+The approved Phase 1 role baseline, engineer assignment scope, Super Admin-only security mutation and Management read-only inspection are recorded in docs/decisions/012-authorization-baseline.md. Development origin/callback/reset are configurable and approved as http://localhost:3000, /auth/callback and /auth/reset-password. Temporary real Supabase identity verification and exact cleanup were expressly authorized by the owner. Production identity/origins/SMTP/deployment remain future configuration.
+
+Service Manager customer/site operational field edits, commercial/legal/financial read-only fields and archive/merge prohibition are confirmed in docs/decisions/013-customer-operational-access.md. Project Manager cannot create standalone customers; access requires an existing managed project and project-relevant operational context. Those documents supersede older missing-access-policy statements; they do not claim that customer/project enforcement exists.
+
+Warranty routing is confirmed as active warranty, else active AMC, else paid service. Overrides require authorized user/reason/time/audit. Product coverage, quotation approval thresholds/hierarchy, SLA hours/calendars, actual per-contract AMC frequencies and contractual backup RPO/RTO remain unconfirmed; configurable structures are allowed without inventing production values.

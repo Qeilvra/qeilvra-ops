@@ -137,3 +137,35 @@ Tune aggregate pool budgets when replica
 counts and Supabase limits are confirmed. Backups/restore belong to TASK-220+.
 The workspace lacks `docs/verification/task-004.md`; its stale task status is
 outside this batch and was not rewritten as verified history.
+
+---
+
+## Reconciliation — 6 October 2026
+
+Current status: **DONE**. Previous tracker state: DONE.
+
+### Objective and implementation evidence
+
+PostgreSQL. Read-only live Supabase verified strict CA/TLS, safe queries, pool reuse and migration-0001 checksum. All five migrations/replay/rollback verified locally. Cloud deployment of 0002–0005 is separate.
+
+Files inspected:
+
+- `packages/database/src/{index,migrations}.ts`
+- `packages/database/migrations/*.sql`
+- `tests/live/database.test.cjs`
+
+### Migrations, security and performance
+
+No migration was changed or applied to cloud during this audit. Existing infrastructure boundaries were reviewed. Current implemented scope was reviewed; representative production latency and future business security acceptance remain separate.
+
+### Tests, commands and results
+
+Current reconciliation runs the established `pnpm check` gate and standalone test/type commands, real disposable `pnpm test:live`, read-only cloud checks and the expressly approved temporary Supabase identity lifecycle. Exact commands, category totals, exceptions and environment separation are recorded in [the full reconciliation](full-reconciliation.md#test-totals). Passing shared checks do not close the remaining gap stated above.
+
+Historical commands/results above were verified previously and were not fabricated or relabeled as this run.
+
+### Remaining acceptance, blockers and technical debt
+
+Read-only live Supabase verified strict CA/TLS, safe queries, pool reuse and migration-0001 checksum. All five migrations/replay/rollback verified locally. Cloud deployment of 0002–0005 is separate.
+
+No remaining acceptance gap for this task’s stated scope. Production rollout, business modules and realistic-scale release acceptance are separate tasks.

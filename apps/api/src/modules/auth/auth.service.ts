@@ -59,12 +59,9 @@ export class AuthService {
   readonly sessionCookie: string;
   readonly recoveryCookie: string;
 
-  constructor(
-    configuration: ServerConfiguration,
-    database: DatabaseClient | null,
-  ) {
-    this.#configuration=configuration;
-    this.#database=database;
+  constructor(configuration: ServerConfiguration, database: DatabaseClient | null) {
+    this.#configuration = configuration;
+    this.#database = database;
     this.#messages = new AuthMessageProducer(configuration.redis);
     this.#provider = configuration.auth.enabled ? new SupabaseAuthProvider(configuration) : null;
     this.#cipher = configuration.auth.secret ? new RecoveryCipher(configuration.auth.secret) : null;
@@ -73,8 +70,12 @@ export class AuthService {
     this.recoveryCookie = this.#secure ? "__Host-airmech_recovery" : "airmech_recovery";
   }
 
-  get configuration(): ServerConfiguration { return this.#configuration; }
-  private get database(): DatabaseClient | null { return this.#database; }
+  get configuration(): ServerConfiguration {
+    return this.#configuration;
+  }
+  private get database(): DatabaseClient | null {
+    return this.#database;
+  }
 
   get databaseClient(): DatabaseClient {
     if (!this.configuration.auth.enabled || !this.database || !this.#provider || !this.#cipher)

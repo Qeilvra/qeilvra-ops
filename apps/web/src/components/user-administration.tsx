@@ -13,6 +13,7 @@ import {
   PageHeader,
   Pagination,
   SearchField,
+  Select,
   Skeleton,
   StatusBadge,
 } from "@airmech/ui";
@@ -94,6 +95,7 @@ function UserManagement({ principal }: { principal: AccessPrincipal }) {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -110,7 +112,7 @@ function UserManagement({ principal }: { principal: AccessPrincipal }) {
       try {
         const [list, catalog] = await Promise.all([
           apiRequest(
-            `/admin/users?page=${page}&search=${encodeURIComponent(search)}`,
+            `/admin/users?page=${page}&search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`,
             signal ? { signal } : {},
           ),
           apiRequest("/admin/roles", signal ? { signal } : {}),
@@ -125,7 +127,7 @@ function UserManagement({ principal }: { principal: AccessPrincipal }) {
         if (!signal?.aborted) setLoading(false);
       }
     },
-    [page, search],
+    [page, search, status],
   );
   useEffect(() => {
     const controller = new AbortController();
@@ -227,6 +229,7 @@ function UserManagement({ principal }: { principal: AccessPrincipal }) {
           const data = new FormData(event.currentTarget);
           setPage(1);
           setSearch(String(data.get("search") ?? ""));
+          setStatus(String(data.get("status") ?? ""));
         }}
       >
         <SearchField
@@ -239,6 +242,12 @@ function UserManagement({ principal }: { principal: AccessPrincipal }) {
         <Button type="submit" variant="secondary">
           Search
         </Button>
+        <Select id="user-status" label="Account status" name="status">
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="invited">Invited</option>
+          <option value="disabled">Disabled</option>
+        </Select>
       </form>
       {notice && <p role="status">{notice}</p>}
       {error && (
@@ -619,22 +628,24 @@ function RoleManagement({ principal }: { principal: AccessPrincipal }) {
             </p>
             <fieldset className="admin-role-choices">
               <legend>Action grants</legend>
-              {catalog.filter(code=>editing.allowedPermissions.includes(code)).map((code) => (
-                <Checkbox
-                  key={code}
-                  id={`grant-${code.replaceAll(".", "-")}`}
-                  label={code}
-                  checked={permissions.includes(code)}
-                  disabled={busy}
-                  onChange={(event) =>
-                    setPermissions((current) =>
-                      event.target.checked
-                        ? [...current, code]
-                        : current.filter((item) => item !== code),
-                    )
-                  }
-                />
-              ))}
+              {catalog
+                .filter((code) => editing.allowedPermissions.includes(code))
+                .map((code) => (
+                  <Checkbox
+                    key={code}
+                    id={`grant-${code.replaceAll(".", "-")}`}
+                    label={code}
+                    checked={permissions.includes(code)}
+                    disabled={busy}
+                    onChange={(event) =>
+                      setPermissions((current) =>
+                        event.target.checked
+                          ? [...current, code]
+                          : current.filter((item) => item !== code),
+                      )
+                    }
+                  />
+                ))}
             </fieldset>
             {error && <ErrorState>{error}</ErrorState>}
             <Button type="submit" busy={busy}>

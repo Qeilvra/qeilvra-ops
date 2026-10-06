@@ -65,38 +65,43 @@ Supabase access is unnecessary in the current API-oriented architecture.
 
 ## Variables
 
-| Variable                    | Default/requirement                                                          | Exposure       |
-| --------------------------- | ---------------------------------------------------------------------------- | -------------- |
-| `NODE_ENV`                  | `development`; exactly `development`, `test`, or `production`                | Server/tooling |
-| `HOST`                      | `127.0.0.1` for API/worker                                                   | Server         |
-| `PORT`                      | API `3001`, worker `3002`; integer `1..65535`                                | Server         |
-| `ENV_FILE`                  | Optional explicit private dotenv file                                        | Server/tooling |
-| `NEXT_PUBLIC_APP_NAME`      | `Airmech One`; bounded nonblank text                                         | Public         |
-| `DATABASE_ENABLED`          | `false`; requires `DATABASE_URL` when true                                   | Server         |
-| `DATABASE_URL`              | PostgreSQL URL; PostgreSQL via Supabase direction                            | Server secret  |
-| `DATABASE_MIGRATION_URL`    | Optional direct/session URL for explicit migrations; defaults to runtime URL | Server secret  |
-| `DATABASE_CA_FILE`          | Optional PEM CA path for verified remote PostgreSQL TLS                      | Server         |
-| `REDIS_ENABLED`             | `false`; requires `REDIS_URL` when true                                      | Server         |
-| `REDIS_URL`                 | `redis://` or `rediss://` URL                                                | Server secret  |
-| `AUTH_ENABLED`              | `false`; requires `AUTH_SECRET` when true                                    | Server         |
-| `AUTH_SECRET`               | At least 32 characters                                                       | Server secret  |
-| `STORAGE_ENABLED`           | `false`; requires Supabase URL, service-role key, and bucket when true       | Server         |
-| `SUPABASE_URL`              | HTTP(S) project URL                                                          | Server         |
-| `SUPABASE_ANON_KEY`         | Optional reserved project key                                                | Server         |
-| `SUPABASE_SERVICE_ROLE_KEY` | Private elevated key; never public-prefixed                                  | Server secret  |
-| `STORAGE_BUCKET`            | Private bucket identifier                                                    | Server         |
-| `STORAGE_SECRET`            | Optional reserved alternative-storage credential                             | Server secret  |
-| `EMAIL_ENABLED`             | `false`; requires API key and sender when true                               | Server         |
-| `EMAIL_API_KEY`             | Provider credential                                                          | Server secret  |
-| `EMAIL_FROM`                | Sender email address                                                         | Server         |
-| `OBSERVABILITY_ENABLED`     | `false`; requires endpoint when true                                         | Server         |
-| `OBSERVABILITY_ENDPOINT`    | HTTP(S) collector endpoint                                                   | Server         |
-| `OBSERVABILITY_API_KEY`     | Optional collector credential                                                | Server secret  |
-| `OBSERVABILITY_SAMPLE_RATE` | `1`; number `0..1`                                                           | Server         |
-| `WHATSAPP_ENABLED`          | `false`; requires token when true                                            | Server         |
-| `WHATSAPP_TOKEN`            | Reserved provider credential                                                 | Server secret  |
-| `AI_ENABLED`                | `false`; requires API key when true                                          | Server         |
-| `AI_API_KEY`                | Reserved provider credential                                                 | Server secret  |
+| Variable                    | Default/requirement                                                                                  | Exposure       |
+| --------------------------- | ---------------------------------------------------------------------------------------------------- | -------------- |
+| `NODE_ENV`                  | `development`; exactly `development`, `test`, or `production`                                        | Server/tooling |
+| `HOST`                      | `127.0.0.1` for API/worker                                                                           | Server         |
+| `PORT`                      | API `3001`, worker `3002`; integer `1..65535`                                                        | Server         |
+| `ENV_FILE`                  | Optional explicit private dotenv file                                                                | Server/tooling |
+| `NEXT_PUBLIC_APP_NAME`      | `Airmech One`; bounded nonblank text                                                                 | Public         |
+| `DATABASE_ENABLED`          | `false`; requires `DATABASE_URL` when true                                                           | Server         |
+| `DATABASE_URL`              | PostgreSQL URL; PostgreSQL via Supabase direction                                                    | Server secret  |
+| `DATABASE_MIGRATION_URL`    | Optional direct/session URL for explicit migrations; defaults to runtime URL                         | Server secret  |
+| `DATABASE_CA_FILE`          | Optional PEM CA path for verified remote PostgreSQL TLS                                              | Server         |
+| `REDIS_ENABLED`             | `false`; requires `REDIS_URL` when true                                                              | Server         |
+| `REDIS_URL`                 | `redis://` or `rediss://` URL                                                                        | Server secret  |
+| `AUTH_ENABLED`              | `false`; requires secret, APP_URL, enabled database and server Supabase settings                     | Server         |
+| `AUTH_SECRET`               | At least 32 characters                                                                               | Server secret  |
+| `APP_URL`                   | Required for auth; approved development origin `http://localhost:3000`; remote origins require HTTPS | Server         |
+| `API_INTERNAL_URL`          | Web-only reverse proxy origin; defaults to `http://127.0.0.1:3001`; remote origins require HTTPS     | Server         |
+| `AUTH_SESSION_SECONDS`      | Enabled auth default `28800`; integer `300..86400`                                                   | Server         |
+| `BOOTSTRAP_ADMIN_EMAIL`     | Explicit provisioning only; paired with bootstrap name, never auto-created                           | Server         |
+| `BOOTSTRAP_ADMIN_NAME`      | Explicit provisioning name, paired with bootstrap email                                              | Server         |
+| `STORAGE_ENABLED`           | `false`; requires Supabase URL, service-role key, and bucket when true                               | Server         |
+| `SUPABASE_URL`              | HTTP(S) project URL                                                                                  | Server         |
+| `SUPABASE_ANON_KEY`         | Required when authentication is enabled; remains server-only                                         | Server         |
+| `SUPABASE_SERVICE_ROLE_KEY` | Private elevated key; never public-prefixed                                                          | Server secret  |
+| `STORAGE_BUCKET`            | Private bucket identifier                                                                            | Server         |
+| `STORAGE_SECRET`            | Optional reserved alternative-storage credential                                                     | Server secret  |
+| `EMAIL_ENABLED`             | `false`; requires API key and sender when true                                                       | Server         |
+| `EMAIL_API_KEY`             | Provider credential                                                                                  | Server secret  |
+| `EMAIL_FROM`                | Sender email address                                                                                 | Server         |
+| `OBSERVABILITY_ENABLED`     | `false`; requires endpoint when true                                                                 | Server         |
+| `OBSERVABILITY_ENDPOINT`    | HTTP(S) collector endpoint                                                                           | Server         |
+| `OBSERVABILITY_API_KEY`     | Optional collector credential                                                                        | Server secret  |
+| `OBSERVABILITY_SAMPLE_RATE` | `1`; number `0..1`                                                                                   | Server         |
+| `WHATSAPP_ENABLED`          | `false`; requires token when true                                                                    | Server         |
+| `WHATSAPP_TOKEN`            | Reserved provider credential                                                                         | Server secret  |
+| `AI_ENABLED`                | `false`; requires API key when true                                                                  | Server         |
+| `AI_API_KEY`                | Reserved provider credential                                                                         | Server secret  |
 
 `HOST` and `PORT` are process overrides: setting a single root `PORT` applies it
 to both Node apps, so override it separately when running them together. Web

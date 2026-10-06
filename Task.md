@@ -5,6 +5,8 @@
 
 This file defines the implementation order, task status, dependencies, and acceptance checks for the complete project.
 
+Reconciled 6 October 2026 against source, current automated/live checks, historical evidence and approved decisions. All 133 formal tasks have explicit states; there is no TASK-009. See [the complete audit and per-task gaps](docs/verification/full-reconciliation.md). A BACKLOG state identifies unstarted work; it does not claim a configurable production value prevents all implementation.
+
 ---
 
 # 1. Core Rule
@@ -135,21 +137,10 @@ A task is `DONE` only when:
 
 ## TASK-001 — Create Monorepo
 
-**Status:** DONE
+Status: DONE
 
-Owner: repository foundation. No business data, role grants, or production integrations are introduced by this task.
-Dependencies: documentation review and complete repository inspection (completed 5 October 2026).
-Implementation and verification plan: `docs/implementation-plan.md`.
-
-Verified 5 October 2026: initial and frozen-lockfile installation, all app/package
-builds, strict typechecking, lint, and formatting passed. Nine unit/integration
-tests, three compiled startup tests, and six desktop/tablet/mobile browser checks
-passed. Dependency audit reported zero advisories. Independent foundation review
-found no remaining TASK-001 blocker.
-
-Evidence and scope limits: `docs/verification/task-001.md`.
-Status progression: READY → IN_PROGRESS → REVIEW → DONE.
-Next READY task: TASK-002. Later operational/infrastructure tasks remain pending.
+Reconciled 6 October 2026: Workspace resolution, 11 app/package builds and compiled startup verified; no foundation acceptance gap.
+Evidence and remaining acceptance: [task-001 verification](docs/verification/task-001.md).
 
 Create:
 
@@ -177,18 +168,10 @@ Acceptance:
 
 ## TASK-002 — TypeScript Configuration
 
-**Status:** DONE
+Status: DONE
 
-Verified 5 October 2026: shared strict presets cover all three applications,
-all five packages, and root TypeScript tooling. Typecheck, lint, formatting,
-tests, and complete production builds passed with dependency declaration checks
-enabled. Existing TASK-001 checks passed: nine unit/integration tests, three
-compiled startup tests, and six desktop/tablet/mobile browser tests.
-
-Evidence, config structure, package boundaries, and compatibility follow-up:
-`docs/verification/task-002.md`.
-Status progression: READY → IN_PROGRESS → REVIEW → DONE.
-Next READY task: TASK-003 — Code Quality. No later task was started.
+Reconciled 6 October 2026: Strict presets and complete workspace/tooling typechecking verified; no foundation acceptance gap.
+Evidence and remaining acceptance: [task-002 verification](docs/verification/task-002.md).
 
 Requirements:
 
@@ -201,19 +184,10 @@ Requirements:
 
 ## TASK-003 — Code Quality
 
-**Status:** DONE
+Status: DONE
 
-Verified 5 October 2026: one shared ESLint architecture covers all applications
-and packages, with typed async/safety checks, React/Next.js rules, and import
-boundaries. Prettier and strict TASK-002 TypeScript configuration are preserved.
-The complete quality gate passed from clean build artifacts: all eight workspace
-builds, typecheck, lint, formatting, 17 unit/integration tests, three startup
-tests, six browser checks, and a clean dependency audit. Existing tests passed.
-
-Evidence, commands, scoped dependency compatibility patch, and follow-up notes:
-`docs/verification/task-003.md`.
-Status progression: READY → IN_PROGRESS → REVIEW → DONE.
-Next READY task: TASK-004 — Environment Configuration. No later task was started.
+Reconciled 6 October 2026: Established build/lint/format/type/test/browser/advisory gates verified after three narrow formatting fixes.
+Evidence and remaining acceptance: [task-003 verification](docs/verification/task-003.md).
 
 Configure:
 
@@ -227,7 +201,10 @@ Configure:
 
 ## TASK-004 — Environment Configuration
 
-**Status:** IN_PROGRESS
+Status: DONE
+
+Reconciled 6 October 2026: Typed environment validation, public allowlist, ignored local configuration and startup/boundary tests verified. The former IN_PROGRESS label was stale.
+Evidence and remaining acceptance: [task-004 verification](docs/verification/task-004.md).
 
 Create validated environment handling for:
 
@@ -246,14 +223,10 @@ Never expose secrets to frontend code.
 
 ## TASK-005 — PostgreSQL
 
-**Status:** DONE
+Status: DONE
 
-Real Supabase acceptance passed on 5 October 2026 with the supplied trusted CA:
-strict TLS, safe typed queries, backend reuse, infrastructure migration application,
-zero-change replay and exact ledger checksum verification. Live database tests and
-server/browser boundary checks passed. Credentials and CA remain ignored locally;
-no authentication or business tables were created. Evidence:
-docs/verification/task-005.md.
+Reconciled 6 October 2026: Read-only live Supabase verified strict CA/TLS, safe queries, pool reuse and migration-0001 checksum. All five migrations/replay/rollback verified locally. Cloud deployment of 0002–0005 is separate.
+Evidence and remaining acceptance: [task-005 verification](docs/verification/task-005.md).
 
 Set up:
 
@@ -266,14 +239,10 @@ Set up:
 
 ## TASK-006 — Redis / Job Queue
 
-**Status:** DONE
+Status: DONE
 
-Verified 5 October 2026: lazy API BullMQ producer → Redis → compiled worker
-processed `system.healthcheck`; bounded retries/backoff, failure retention,
-idempotent IDs, unavailable Redis handling and owned-process cleanup passed.
-Eight queue unit tests and four live Redis tests passed. The complete root
-quality gate and advisory audit passed. No business jobs or HTTP routes added.
-Evidence: `docs/verification/task-006.md`.
+Reconciled 6 October 2026: Real isolated Redis producer/consumer, compiled worker, retries, deduplication, retained failures and cleanup passed.
+Evidence and remaining acceptance: [task-006 verification](docs/verification/task-006.md).
 
 Required for:
 
@@ -288,13 +257,10 @@ Required for:
 
 ## TASK-007 — Object Storage
 
-**Status:** DONE
+Status: DONE
 
-Live Supabase acceptance passed on 5 October 2026 using the sole existing private
-bucket: generated-key upload, metadata, public/anonymous denial, matching signed
-download, actual expiry, exact-object deletion and empty test-prefix confirmation.
-Secrets and bucket selection are local only. Deny-default authorization and
-bounded streaming remain intact. Evidence: docs/verification/task-007.md.
+Reconciled 6 October 2026: Current private-bucket read-only check and storage unit/stream/authorization tests passed. Historical live upload, public/anonymous denial, signing, expiry and cleanup evidence retained; no cloud object mutation repeated.
+Evidence and remaining acceptance: [task-007 verification](docs/verification/task-007.md).
 
 Support private files:
 
@@ -307,13 +273,10 @@ Support private files:
 
 ## TASK-008 — CI Pipeline
 
-**Status:** DONE
+Status: DONE
 
-GitHub foundation run 37298345682 passed all steps for commit dfdf34b on main:
-frozen install, complete quality gate, browsers, disposable PostgreSQL migrations
-and live PostgreSQL/Redis verification. Logs contain none of the configured local
-secrets. Existing HTTPS Git credentials work; the earlier SSH blocker is resolved.
-Evidence: docs/verification/task-008.md.
+Reconciled 6 October 2026: Workflow structure and deterministic frozen install/quality/disposable-service steps verified. Prior hosted passing runs retained; latest hosted result is recorded separately, without claiming unpushed changes passed remotely.
+Evidence and remaining acceptance: [task-008 verification](docs/verification/task-008.md).
 
 Run on every PR:
 
@@ -325,8 +288,7 @@ tests
 build
 ```
 
-There is no TASK-009. TASK-010 is the next planned task after the completed
-infrastructure batch. No authentication or business module was started.
+There is no TASK-009. Current implementation is recorded in the reconciliation report.
 
 ---
 
@@ -334,8 +296,10 @@ infrastructure batch. No authentication or business module was started.
 
 ## TASK-010 — User Model
 
-Status: DONE — model, typed repository and real disposable PostgreSQL tests passed
-in hosted CI. See `docs/verification/task-010.md`.
+Status: DONE
+
+Reconciled 6 October 2026: User identity linkage, active/invited/disabled state, constraints, indexed repository and live SQL integrity passed; no password duplication.
+Evidence and remaining acceptance: [task-010 verification](docs/verification/task-010.md).
 
 Create:
 
@@ -349,8 +313,10 @@ Create:
 
 ## TASK-011 — Roles
 
-Status: DONE — eight role records and relations verified in actual hosted
-PostgreSQL, without implicit grants. See `docs/verification/task-011.md`.
+Status: REVIEW
+
+Reconciled 6 October 2026: Eight stable approved lower-case role codes, names, grants and replay are verified. Role-level active/inactive state required by this audit is absent; add and verify lifecycle enforcement before DONE. Historical model-only DONE is narrower.
+Evidence and remaining acceptance: [task-011 verification](docs/verification/task-011.md).
 
 Create:
 
@@ -369,8 +335,10 @@ Store
 
 ## TASK-012 — Permissions
 
-Status: BLOCKED — permission catalog and deny-by-default checks are prepared;
-approved role grants and object visibility/ownership are not confirmed.
+Status: DONE
+
+Reconciled 6 October 2026: Normalized permission catalog/mappings and persisted SQL grants match all eight approved role baselines. Current resolution, deny defaults and removal tests passed. Customer field/managed-project enforcement remains in TASK-031–035.
+Evidence and remaining acceptance: [task-012 verification](docs/verification/task-012.md).
 
 Examples:
 
@@ -397,9 +365,10 @@ admin.users
 
 ## TASK-013 — Login
 
-Status: BLOCKED — Supabase Auth is the assessed identity provider; controlled
-identity provisioning, deployment/session policy and real login verification
-remain unavailable. No substitute authentication system was created.
+Status: DONE
+
+Reconciled 6 October 2026: Real approved temporary Supabase user authenticated through the API; mapped engineer profile/session/protected access/logout/denial passed; deletion confirmed. Fixture API expiry, forged payload, CSRF, rate limits and browser login passed.
+Evidence and remaining acceptance: [task-013 verification](docs/verification/task-013.md).
 
 Implement:
 
@@ -413,8 +382,10 @@ Implement:
 
 ## TASK-014 — Password Reset
 
-Status: BLOCKED — approved redirect origin, email/reset provider configuration
-and a controlled identity are required for actual recovery verification.
+Status: REVIEW
+
+Reconciled 6 October 2026: PKCE recovery, generic request, replay/session revocation and reset UI pass controlled fixtures. Actual recovery email, approved provider redirect/template and delivered-link password reset remain unverified.
+Evidence and remaining acceptance: [task-014 verification](docs/verification/task-014.md).
 
 Include:
 
@@ -426,8 +397,10 @@ Include:
 
 ## TASK-015 — User Administration
 
-Status: BLOCKED — first-administrator provisioning and permitted role assignment,
-role management and account administration require the approved access policy.
+Status: REVIEW
+
+Reconciled 6 October 2026: Real SQL/API list/search/status filter, profile edits, enable/disable, role assignment/removal, last-admin/concurrency protections and fixture invites pass. Real invite delivery/setup remains unverified; empty out-of-range pages currently lose total count; resend invitation lacks a UI action.
+Evidence and remaining acceptance: [task-015 verification](docs/verification/task-015.md).
 
 Admin can:
 
@@ -440,9 +413,10 @@ Admin can:
 
 ## TASK-016 — Authorization Guards
 
-Status: BLOCKED — explicit permission/object checks deny by default; authenticated
-identity integration and approved object policies are required before protected
-endpoints can be completed.
+Status: DONE
+
+Reconciled 6 October 2026: Global server guard, current active-user/session/permission checks, explicit security-role scope and trusted object-policy foundation verified. Future customer/project/job repository relationships are not claimed implemented.
+Evidence and remaining acceptance: [task-016 verification](docs/verification/task-016.md).
 
 Backend must enforce all protected actions.
 
@@ -452,9 +426,10 @@ Frontend permission checks are for UX only.
 
 ## TASK-017 — Authentication Audit
 
-Status: BLOCKED — append-only audit storage is prepared; actual login/reset,
-disable and role-change event producers depend on the blocked authentication
-and administration flows.
+Status: DONE
+
+Reconciled 6 October 2026: Actual transactional login/logout/reset/user-status/role/grant audit producers verified in disposable PostgreSQL; append-only trigger rejects mutation and details exclude secrets. Role changes use semantic before/after events.
+Evidence and remaining acceptance: [task-017 verification](docs/verification/task-017.md).
 
 Track:
 
@@ -472,8 +447,10 @@ ROLE_CHANGED
 
 ## TASK-020 — Desktop Layout
 
-Status: BLOCKED — shared UI can proceed; actual authenticated user menu,
-role-aware workspace navigation and protected search require TASK-012–016.
+Status: IN_PROGRESS
+
+Reconciled 6 October 2026: Sidebar/header/workspace/account/sign-out/loading/retry exist. Add actual user menu, search and notification entries with integrated navigation; no fabricated domain links.
+Evidence and remaining acceptance: [task-020 verification](docs/verification/task-020.md).
 
 Build:
 
@@ -492,8 +469,10 @@ Follow `DESIGN.md`.
 
 ## TASK-021 — Mobile Navigation
 
-Status: BLOCKED — role-aware mobile navigation requires the approved access
-policy and current authenticated profile. Mobile shared controls proceed separately.
+Status: DONE
+
+Reconciled 6 October 2026: Permission-aware dedicated bottom navigation, touch controls and access to implemented pages verified across four viewport projects; future engineer job screens remain TASK-120–125.
+Evidence and remaining acceptance: [task-021 verification](docs/verification/task-021.md).
 
 Build mobile-specific navigation.
 
@@ -513,8 +492,10 @@ Do NOT simply collapse desktop sidebar.
 
 ## TASK-022 — Responsive Layout System
 
-Status: BLOCKED — responsive shared controls are implemented; integration of the
-actual desktop/mobile protected shell depends on TASK-020–021.
+Status: DONE
+
+Reconciled 6 October 2026: Implemented auth/workspace/admin/shared controls verified at mobile/tablet/desktop/wide sizes without horizontal overflow; mobile cards/bottom navigation preserve implemented permitted capabilities.
+Evidence and remaining acceptance: [task-022 verification](docs/verification/task-022.md).
 
 Support:
 
@@ -537,10 +518,10 @@ Mobile must use:
 
 ## TASK-023 — Shared UI Components
 
-Status: DONE — documented controls, overlays, tabs, states and bounded table/card
-presentation verified. Full quality gate passed, including desktop/tablet/mobile
-browser interaction tests. See
-`docs/verification/task-023.md`.
+Status: DONE
+
+Reconciled 6 October 2026: All 18 documented shared controls/state/navigation/table components verified for reuse, focus, validation and bounded mobile cards; no component acceptance gap.
+Evidence and remaining acceptance: [task-023 verification](docs/verification/task-023.md).
 
 Create:
 
@@ -573,8 +554,10 @@ Avoid duplicate components.
 
 ## TASK-030 — Customer Model
 
-Status: DONE — documented fields, primary-contact ownership, archival integrity
-and real PostgreSQL tests passed in hosted CI. See `docs/verification/task-030.md`.
+Status: DONE
+
+Reconciled 6 October 2026: Customer fields, supplied-code uniqueness, contact ownership, archival integrity and RLS passed real SQL tests. CRUD/sites are separate incomplete tasks.
+Evidence and remaining acceptance: [task-030 verification](docs/verification/task-030.md).
 
 Fields:
 
@@ -589,8 +572,10 @@ Fields:
 
 ## TASK-031 — Customer CRUD
 
-Status: BLOCKED — authenticated APIs, approved customer visibility/ownership
-and customer-code assignment policy are required before protected writes.
+Status: READY
+
+Reconciled 6 October 2026: Implement authenticated create/read/update/archive APIs, validation/audit and desktop/mobile flows. Enforce confirmed Service Manager field allowlist and archive prohibition, and managed-project-only Project Manager access/no creation. Preserve supplied codes; confirm any generated numbering before adding it.
+Evidence and remaining acceptance: [task-031 verification](docs/verification/task-031.md).
 
 Implement:
 
@@ -605,8 +590,10 @@ Avoid destructive permanent deletion by default.
 
 ## TASK-032 — Customer Contacts
 
-Status: BLOCKED — contact ownership storage is prepared as part of TASK-030;
-actual administration requires the approved customer access policy and authentication.
+Status: BACKLOG
+
+Reconciled 6 October 2026: Contact ownership schema exists. Add multiple-contact CRUD, field validation/audit, approved operational-field enforcement and browser flows after customer CRUD.
+Evidence and remaining acceptance: [task-032 verification](docs/verification/task-032.md).
 
 Multiple contacts per customer.
 
@@ -614,8 +601,10 @@ Multiple contacts per customer.
 
 ## TASK-033 — Customer Sites
 
-Status: BLOCKED — contact/site visibility and authorized customer operations
-depend on TASK-012–016 and the approved customer access policy.
+Status: BACKLOG
+
+Reconciled 6 October 2026: No site schema/API/UI. Add documented site fields/ownership and service-field/managed-project authorization with migrations and tests.
+Evidence and remaining acceptance: [task-033 verification](docs/verification/task-033.md).
 
 Each customer can have multiple sites.
 
@@ -631,8 +620,10 @@ Fields:
 
 ## TASK-034 — Customer List
 
-Status: BLOCKED — requires actual permission-filtered customer API data;
-shared table/mobile-card and pagination controls are verified under TASK-023.
+Status: BACKLOG
+
+Reconciled 6 October 2026: No actual customer list API/screen. Add permission-filtered server pagination/search/filter/sort, desktop table/mobile cards and live-data browser acceptance.
+Evidence and remaining acceptance: [task-034 verification](docs/verification/task-034.md).
 
 Desktop:
 
@@ -652,8 +643,10 @@ Never load all customers at once.
 
 ## TASK-035 — Customer 360
 
-Status: BLOCKED — requires protected, integrated customer/contact/site and related
-module APIs; component specimens do not count as a Customer 360 implementation.
+Status: BACKLOG
+
+Reconciled 6 October 2026: No Customer 360 route/APIs. Add lazy overview/contact/site/asset/enquiry/quotation/project/complaint/AMC/document/activity relations and authorized integration.
+Evidence and remaining acceptance: [task-035 verification](docs/verification/task-035.md).
 
 Show:
 
@@ -679,6 +672,11 @@ Load tabs only when needed.
 
 ## TASK-040 — Enquiry Model
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No enquiry schema/contracts/repository. Model documented customer/site/source/requirement/owner/priority/status/next action/follow-up/notes with constraints and tests.
+Evidence and remaining acceptance: [task-040 verification](docs/verification/task-040.md).
+
 Fields:
 
 ```text
@@ -699,6 +697,11 @@ Notes
 
 ## TASK-041 — Enquiry Creation
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No enquiry creation API/UI. Implement validated documented intake sources and authorized customer/site selection, ownership and audit.
+Evidence and remaining acceptance: [task-041 verification](docs/verification/task-041.md).
+
 Sources:
 
 ```text
@@ -714,6 +717,11 @@ Direct RFQ
 ---
 
 ## TASK-042 — Enquiry Pipeline
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No enquiry pipeline. Implement documented NEW through WON/LOST transitions, paginated views and validation.
+Evidence and remaining acceptance: [task-042 verification](docs/verification/task-042.md).
 
 Statuses:
 
@@ -732,6 +740,11 @@ LOST
 
 ## TASK-043 — Enquiry Assignment
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No enquiry assignment/reassignment service/UI. Add trusted authorized ownership transitions and audit.
+Evidence and remaining acceptance: [task-043 verification](docs/verification/task-043.md).
+
 Allow assignment/reassignment.
 
 Create audit event.
@@ -739,6 +752,11 @@ Create audit event.
 ---
 
 ## TASK-044 — Follow-up Automation
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No follow-up scheduler/jobs. Implement no-next-action/overdue reminders and manager escalation with configurable timing, durable deduplication and tests.
+Evidence and remaining acceptance: [task-044 verification](docs/verification/task-044.md).
 
 Rules:
 
@@ -759,9 +777,10 @@ Still overdue
 
 ## TASK-050 — Quotation Model
 
-Status: BLOCKED — approved monetary calculation, currency/tax/rounding and
-quotation numbering/revision policy are required before finalizing money-bearing
-records. Do not infer these from illustrative examples.
+Status: BACKLOG
+
+Reconciled 6 October 2026: No quotation schema. Implement configurable money/currency/tax/rounding, numbered revisions and immutable line-item records; confirm actual monetary/numbering values before commercial acceptance.
+Evidence and remaining acceptance: [task-050 verification](docs/verification/task-050.md).
 
 Include:
 
@@ -781,11 +800,21 @@ Include:
 
 ## TASK-051 — Quotation Builder
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No quotation builder. Implement multiple product/service lines, validated totals and role-aware desktop/mobile forms.
+Evidence and remaining acceptance: [task-051 verification](docs/verification/task-051.md).
+
 Support multiple products/services.
 
 ---
 
 ## TASK-052 — Quotation Revision History
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No revision history. Implement immutable version snapshots and numbering with SQL/API/UI tests.
+Evidence and remaining acceptance: [task-052 verification](docs/verification/task-052.md).
 
 Never overwrite previous revisions.
 
@@ -802,8 +831,10 @@ Revision 3
 
 ## TASK-053 — Approval Workflow
 
-Status: BLOCKED — quotation approval hierarchy, authority and thresholds are
-explicitly unconfirmed in memory.md.
+Status: BLOCKED
+
+Reconciled 6 October 2026: Approval hierarchy, tiers, thresholds, discount limits and approvers are unconfirmed. Configurable scaffolding can proceed; final actual approval-policy acceptance is blocked.
+Evidence and remaining acceptance: [task-053 verification](docs/verification/task-053.md).
 
 Statuses:
 
@@ -823,6 +854,11 @@ EXPIRED
 
 ## TASK-054 — Quotation PDF
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No quotation PDF job/template/storage flow. Implement asynchronous generation, safe authorized download, retries and failure UX.
+Evidence and remaining acceptance: [task-054 verification](docs/verification/task-054.md).
+
 Generate asynchronously.
 
 Flow:
@@ -841,6 +877,11 @@ Worker Generates PDF
 
 ## TASK-055 — Quotation Follow-up
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No quotation reminders. Implement configurable sent/next-action/expiry follow-up jobs and recipients with deduplication.
+Evidence and remaining acceptance: [task-055 verification](docs/verification/task-055.md).
+
 Create reminders based on:
 
 - sent date
@@ -851,6 +892,11 @@ Create reminders based on:
 
 ## TASK-056 — Quotation → Project
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No accepted-quotation conversion. Add authorized transactional project creation and duplicate/concurrent-conversion protection.
+Evidence and remaining acceptance: [task-056 verification](docs/verification/task-056.md).
+
 Accepted quotation can create a project/order.
 
 Must use transaction.
@@ -860,6 +906,11 @@ Must use transaction.
 # 12. Phase 6 — Projects
 
 ## TASK-060 — Project Model
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No project schema/service. Model customer/site/manager/team/contract/dates/status and trusted managed-project relationships.
+Evidence and remaining acceptance: [task-060 verification](docs/verification/task-060.md).
 
 Include:
 
@@ -874,6 +925,11 @@ Include:
 ---
 
 ## TASK-061 — Project Lifecycle
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No project lifecycle. Implement PLANNING through WARRANTY transitions and audit.
+Evidence and remaining acceptance: [task-061 verification](docs/verification/task-061.md).
 
 ```text
 PLANNING
@@ -890,6 +946,11 @@ WARRANTY
 
 ## TASK-062 — Milestones
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No milestones. Implement due dates, owner, status/progress and linked permissions.
+Evidence and remaining acceptance: [task-062 verification](docs/verification/task-062.md).
+
 Support:
 
 - due date
@@ -901,11 +962,21 @@ Support:
 
 ## TASK-063 — Tasks
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No project/milestone task functionality. Add model, CRUD, ownership, state transitions and UI.
+Evidence and remaining acceptance: [task-063 verification](docs/verification/task-063.md).
+
 Tasks belong to project/milestone.
 
 ---
 
 ## TASK-064 — Project Issues
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No project issues. Implement severity/owner/due/resolution workflow, validation and audit.
+Evidence and remaining acceptance: [task-064 verification](docs/verification/task-064.md).
 
 Track:
 
@@ -918,6 +989,11 @@ Track:
 ---
 
 ## TASK-065 — Project Documents
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No project document associations/UI. Add authorized drawing/BOQ/contract/commissioning/handover links through private storage.
+Evidence and remaining acceptance: [task-065 verification](docs/verification/task-065.md).
 
 Support:
 
@@ -933,6 +1009,11 @@ Support:
 # 13. Phase 7 — Asset / Equipment Registry
 
 ## TASK-070 — Asset Model
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No asset schema. Implement documented identity/customer/site/category/brand/model/serial/install/warranty/AMC/status fields.
+Evidence and remaining acceptance: [task-070 verification](docs/verification/task-070.md).
 
 Fields:
 
@@ -955,6 +1036,11 @@ Status
 
 ## TASK-071 — Asset Creation
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No asset creation/import/project registration. Add ownership, validation/audit and idempotent origins.
+Evidence and remaining acceptance: [task-071 verification](docs/verification/task-071.md).
+
 Assets can originate from:
 
 - project
@@ -964,6 +1050,11 @@ Assets can originate from:
 ---
 
 ## TASK-072 — Asset Search
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No asset search. Add permission-filtered indexed ID/serial/customer/site/model search with bounded pages.
+Evidence and remaining acceptance: [task-072 verification](docs/verification/task-072.md).
 
 Search strongly by:
 
@@ -980,6 +1071,11 @@ Must be indexed.
 ---
 
 ## TASK-073 — Asset History
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No asset history APIs/UI. Integrate installation/warranty/complaint/work/maintenance/report/document history with lazy pagination.
+Evidence and remaining acceptance: [task-073 verification](docs/verification/task-073.md).
 
 Show:
 
@@ -1000,6 +1096,11 @@ Do not load full multi-year history automatically.
 # 14. Phase 8 — Complaints
 
 ## TASK-080 — Complaint Model
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No complaint schema. Model documented customer/site/asset/description/category/priority/status/SLA/reporter/assignment/timestamps.
+Evidence and remaining acceptance: [task-080 verification](docs/verification/task-080.md).
 
 Fields:
 
@@ -1024,6 +1125,11 @@ Closed At
 
 ## TASK-081 — Complaint Creation
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No complaint creation/upload flow. Add intake validation, private authorized attachments and audit; confirm launch intake channels when configuring them.
+Evidence and remaining acceptance: [task-081 verification](docs/verification/task-081.md).
+
 Allow attachment of:
 
 - images
@@ -1033,6 +1139,11 @@ Allow attachment of:
 ---
 
 ## TASK-082 — Complaint Status Workflow
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No complaint state machine. Implement documented RECEIVED through CLOSED transitions with required data and audit.
+Evidence and remaining acceptance: [task-082 verification](docs/verification/task-082.md).
 
 ```text
 RECEIVED
@@ -1053,8 +1164,10 @@ CLOSED
 
 ## TASK-083 — Complaint SLA
 
-Status: BLOCKED — priority/SLA rules, working calendars and escalation policy
-require client confirmation.
+Status: BACKLOG
+
+Reconciled 6 October 2026: No configurable SLA engine/jobs. Build priority/due/warning/breach/escalation/calendar structures; final production hours/calendars/escalation values remain unconfirmed.
+Evidence and remaining acceptance: [task-083 verification](docs/verification/task-083.md).
 
 Support:
 
@@ -1066,6 +1179,11 @@ Support:
 ---
 
 ## TASK-084 — Complaint Detail
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No complaint detail. Add overview/timeline/work order/asset/documents with desktop split view and mobile tabs/drill-down.
+Evidence and remaining acceptance: [task-084 verification](docs/verification/task-084.md).
 
 Desktop:
 
@@ -1085,6 +1203,11 @@ same capabilities using tabs/drill-down.
 
 ## TASK-085 — Complaint Reopen
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No reopen endpoint/UI. Add authorized reason-based transition and audit.
+Evidence and remaining acceptance: [task-085 verification](docs/verification/task-085.md).
+
 Authorized users can reopen with reason.
 
 Audit required.
@@ -1095,7 +1218,10 @@ Audit required.
 
 ## TASK-090 — Warranty Check
 
-Status: BLOCKED — product/brand warranty eligibility rules are unconfirmed.
+Status: BACKLOG
+
+Reconciled 6 October 2026: No asset warranty evaluation. Implement configured asset-date checks; product-specific coverage remains unconfirmed for final eligibility acceptance.
+Evidence and remaining acceptance: [task-090 verification](docs/verification/task-090.md).
 
 Determine using asset warranty dates.
 
@@ -1103,8 +1229,10 @@ Determine using asset warranty dates.
 
 ## TASK-091 — Warranty Workflow
 
-Status: BLOCKED — requires confirmed eligibility, AMC coverage and paid-service
-decisions; dates alone cannot establish approved customer-visible coverage.
+Status: BACKLOG
+
+Reconciled 6 October 2026: Warranty → AMC → paid-service routing is confirmed, so the old missing-flow blocker is removed. Implement actual asset/contract-linked routing and verify configurable coverage.
+Evidence and remaining acceptance: [task-091 verification](docs/verification/task-091.md).
 
 ```text
 Complaint
@@ -1122,8 +1250,10 @@ Warranty Active?
 
 ## TASK-092 — Warranty Override
 
-Status: BLOCKED — approved override authority and reason/approval policy are
-required alongside the blocked access matrix and warranty rules.
+Status: BACKLOG
+
+Reconciled 6 October 2026: Override authority is represented by approved grants and reason/user/time/audit are confirmed. Implement actual guarded override and ownership checks; no blanket matrix blocker remains.
+Evidence and remaining acceptance: [task-092 verification](docs/verification/task-092.md).
 
 Authorized users only.
 
@@ -1141,6 +1271,11 @@ Audit event required.
 
 ## TASK-100 — Engineer Profile
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: User profiles exist; no engineer-specific skills/availability model or UI. Implement engineer profile ownership and validation.
+Evidence and remaining acceptance: [task-100 verification](docs/verification/task-100.md).
+
 Store:
 
 - employee
@@ -1152,6 +1287,11 @@ Store:
 
 ## TASK-101 — Engineer Schedule
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No engineer schedule. Implement protected schedule storage/views and assigned-job integration.
+Evidence and remaining acceptance: [task-101 verification](docs/verification/task-101.md).
+
 Show:
 
 - jobs
@@ -1161,6 +1301,11 @@ Show:
 ---
 
 ## TASK-102 — Engineer Availability
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No engineer availability service/UI. Implement trusted availability and workload calculation.
+Evidence and remaining acceptance: [task-102 verification](docs/verification/task-102.md).
 
 Statuses:
 
@@ -1178,6 +1323,11 @@ OFF_DUTY
 
 ## TASK-103 — Assignment Conflict Check
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No assignment conflict checks. Implement transactional overlap/capacity checks and concurrent tests.
+Evidence and remaining acceptance: [task-103 verification](docs/verification/task-103.md).
+
 Warn when:
 
 - overlapping jobs
@@ -1188,6 +1338,11 @@ Warn when:
 # 17. Phase 11 — Work Orders
 
 ## TASK-110 — Work Order Model
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No work-order schema. Model links/assignment/schedule/instructions/field execution with constraints.
+Evidence and remaining acceptance: [task-110 verification](docs/verification/task-110.md).
 
 Link to:
 
@@ -1201,6 +1356,11 @@ Link to:
 ---
 
 ## TASK-111 — Work Order Status
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No work-order state machine. Implement documented engineer execution transitions and required completion data.
+Evidence and remaining acceptance: [task-111 verification](docs/verification/task-111.md).
 
 ```text
 ASSIGNED
@@ -1219,6 +1379,11 @@ CLOSED
 
 ## TASK-112 — Work Order Assignment
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No work-order assignment. Add permissions, trusted engineer availability, conflict protection and audit.
+Evidence and remaining acceptance: [task-112 verification](docs/verification/task-112.md).
+
 Must check:
 
 - permissions
@@ -1229,6 +1394,11 @@ Must check:
 ---
 
 ## TASK-113 — Engineer Field Data
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No engineer field-data flows. Implement owned diagnosis/work/readings/parts/photos/recommendations with validation and mobile UX.
+Evidence and remaining acceptance: [task-113 verification](docs/verification/task-113.md).
 
 Capture:
 
@@ -1244,6 +1414,11 @@ Capture:
 
 ## TASK-114 — Customer Signature
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No customer signature capture/storage. Define consent/format, link signatures to completed work and verify authorized retrieval.
+Evidence and remaining acceptance: [task-114 verification](docs/verification/task-114.md).
+
 Store securely with work order/service report.
 
 ---
@@ -1251,6 +1426,11 @@ Store securely with work order/service report.
 # 18. Phase 12 — Engineer Mobile Experience
 
 ## TASK-120 — Mobile Home
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No engineer task home. Account workspace is not today/upcoming jobs; implement real assigned-job summaries.
+Evidence and remaining acceptance: [task-120 verification](docs/verification/task-120.md).
 
 Show:
 
@@ -1266,6 +1446,11 @@ Notifications
 
 ## TASK-121 — Mobile Jobs
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No mobile jobs screen/APIs. Add paginated assigned today/upcoming jobs with same server permissions.
+Evidence and remaining acceptance: [task-121 verification](docs/verification/task-121.md).
+
 Use task-oriented list.
 
 Do not display desktop table.
@@ -1273,6 +1458,11 @@ Do not display desktop table.
 ---
 
 ## TASK-122 — Mobile Job Detail
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No mobile job detail. Implement task-focused customer/site/asset/history/instructions/diagnosis/readings/photos/parts/signature views.
+Evidence and remaining acceptance: [task-122 verification](docs/verification/task-122.md).
 
 Tabs:
 
@@ -1287,6 +1477,11 @@ Documents
 ---
 
 ## TASK-123 — Sticky Job Actions
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No sticky execution actions. Add contextual start/update/resolve/complete actions backed by validated state transitions.
+Evidence and remaining acceptance: [task-123 verification](docs/verification/task-123.md).
 
 Examples:
 
@@ -1303,6 +1498,11 @@ More
 
 ## TASK-124 — Mobile Photo Upload
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No engineer photo upload UI. Add compression/progress/retry/private job associations and bounded upload verification.
+Evidence and remaining acceptance: [task-124 verification](docs/verification/task-124.md).
+
 Requirements:
 
 - compression
@@ -1313,6 +1513,11 @@ Requirements:
 ---
 
 ## TASK-125 — Weak Network Handling
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No weak-network field-form recovery. Preserve notes, retry safely and test interrupted mobile uploads/updates.
+Evidence and remaining acceptance: [task-125 verification](docs/verification/task-125.md).
 
 Preserve unsaved field data where practical.
 
@@ -1328,6 +1533,11 @@ Provide:
 
 ## TASK-130 — AMC Contract Model
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No AMC schema. Model customer/sites/assets/contract dates/configurable frequency/status/renewal context.
+Evidence and remaining acceptance: [task-130 verification](docs/verification/task-130.md).
+
 Fields:
 
 - customer
@@ -1342,8 +1552,10 @@ Fields:
 
 ## TASK-131 — AMC Schedule Generation
 
-Status: BLOCKED — exact maintenance frequencies and scheduling rules are
-unconfirmed. No guessed schedules or background business jobs were created.
+Status: BACKLOG
+
+Reconciled 6 October 2026: No schedule generator. Build per-contract configurable frequency/date/timezone scheduling and durable idempotency; actual contract frequencies remain unconfirmed.
+Evidence and remaining acceptance: [task-131 verification](docs/verification/task-131.md).
 
 Generate future PM schedule.
 
@@ -1352,6 +1564,11 @@ Must prevent duplicates.
 ---
 
 ## TASK-132 — PM Calendar
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No PM calendar. Implement authorized due/completed/overdue maintenance views.
+Evidence and remaining acceptance: [task-132 verification](docs/verification/task-132.md).
 
 Desktop:
 
@@ -1365,6 +1582,11 @@ Mobile:
 ---
 
 ## TASK-133 — AMC Notifications
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No AMC notifications. Add configurable due/expiry recipients/jobs and delivery acceptance.
+Evidence and remaining acceptance: [task-133 verification](docs/verification/task-133.md).
 
 Examples:
 
@@ -1380,8 +1602,10 @@ Exact business rules should be configurable.
 
 ## TASK-134 — AMC Renewal
 
-Status: BLOCKED — approved renewal/coverage and customer-visible commercial
-rules are required; do not invent contract extensions or prices.
+Status: BACKLOG
+
+Reconciled 6 October 2026: No AMC renewal. Implement expiry/renewal records and alerts; final renewal rules require confirmation without blocking all AMC scaffolding.
+Evidence and remaining acceptance: [task-134 verification](docs/verification/task-134.md).
 
 Create renewal action/opportunity.
 
@@ -1391,17 +1615,32 @@ Create renewal action/opportunity.
 
 ## TASK-140 — PM Work Orders
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No automatic PM work orders. Integrate AMC schedule → work order with transactional/durable duplicate protection.
+Evidence and remaining acceptance: [task-140 verification](docs/verification/task-140.md).
+
 Automatically create required jobs.
 
 ---
 
 ## TASK-141 — PM Engineer Assignment
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No PM engineer assignment. Integrate availability/conflicts, ownership and audit.
+Evidence and remaining acceptance: [task-141 verification](docs/verification/task-141.md).
+
 Same scheduling rules as normal work order.
 
 ---
 
 ## TASK-142 — PM Completion
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No PM completion. Require field data/customer confirmation, report and next-visit/history integration.
+Evidence and remaining acceptance: [task-142 verification](docs/verification/task-142.md).
 
 Update:
 
@@ -1415,6 +1654,11 @@ Update:
 # 21. Phase 15 — Service Reports
 
 ## TASK-150 — Service Report Data
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No service report model/data aggregation. Implement documented work/customer/site/asset/engineer/times/diagnosis/readings/photos/parts/signatures.
+Evidence and remaining acceptance: [task-150 verification](docs/verification/task-150.md).
 
 Include:
 
@@ -1441,8 +1685,10 @@ Engineer Signature
 
 ## TASK-151 — Service Report PDF
 
-Status: BLOCKED — approved service-report format/signature requirements and
-verified service-report/work-order data are required before actual PDF generation.
+Status: BACKLOG
+
+Reconciled 6 October 2026: No service-report PDF processor/template. Build async structure; final client report/signature format remains unconfirmed for template acceptance.
+Evidence and remaining acceptance: [task-151 verification](docs/verification/task-151.md).
 
 Generate via worker.
 
@@ -1451,6 +1697,11 @@ Do not block user request.
 ---
 
 ## TASK-152 — Report Storage
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No service-report document links. Add private report records and authorized customer/asset/complaint/work-order associations.
+Evidence and remaining acceptance: [task-152 verification](docs/verification/task-152.md).
 
 Link report to:
 
@@ -1464,6 +1715,11 @@ Link report to:
 # 22. Phase 16 — Documents
 
 ## TASK-160 — Document Upload
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: Storage adapter exists; no document module/upload API/UI. Implement supported business formats, validation, progress/retry and audit.
+Evidence and remaining acceptance: [task-160 verification](docs/verification/task-160.md).
 
 Support:
 
@@ -1482,6 +1738,11 @@ Support:
 
 ## TASK-161 — Document Security
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: Private storage primitives exist; no authenticated document association resolver/routes. Wire trusted actor/entity/owner policies and verify actual access.
+Evidence and remaining acceptance: [task-161 verification](docs/verification/task-161.md).
+
 Require:
 
 - permission
@@ -1492,6 +1753,11 @@ Require:
 ---
 
 ## TASK-162 — Document Linking
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No document association model/API. Add ownership-linked customer/project/asset/complaint/work-order/AMC/quotation relations.
+Evidence and remaining acceptance: [task-162 verification](docs/verification/task-162.md).
 
 Documents may belong to:
 
@@ -1511,9 +1777,10 @@ Quotation
 
 ## TASK-170 — Notification Model
 
-Status: DONE — in-app/email notification records, recipient ownership,
-read state and deduplication storage passed actual hosted PostgreSQL verification.
-See `docs/verification/task-170.md`.
+Status: DONE
+
+Reconciled 6 October 2026: Recipient/channel/read-state/deduplication schema passed real SQL integrity/RLS tests; it does not complete notification delivery.
+Evidence and remaining acceptance: [task-170 verification](docs/verification/task-170.md).
 
 Support:
 
@@ -1533,8 +1800,10 @@ SMS
 
 ## TASK-171 — Notification Center
 
-Status: BLOCKED — requires authenticated recipient-scoped APIs, approved entity
-visibility and real event producers; model fixtures are not actual notifications.
+Status: BACKLOG
+
+Reconciled 6 October 2026: No recipient-scoped notification API/center. Implement unread/read/linked entity/action, pagination and permission checks against real events.
+Evidence and remaining acceptance: [task-171 verification](docs/verification/task-171.md).
 
 Features:
 
@@ -1547,8 +1816,10 @@ Features:
 
 ## TASK-172 — Notification Worker
 
-Status: BLOCKED — approved recipient/event policy, email-provider configuration
-and integrated business events are required for verified asynchronous delivery.
+Status: BACKLOG
+
+Reconciled 6 October 2026: Auth-only delivery worker exists; general notification records/events are not consumed. Implement recipient/event selection, durable outbox recovery, idempotency and verified business email delivery.
+Evidence and remaining acceptance: [task-172 verification](docs/verification/task-172.md).
 
 Do not send notifications synchronously from business requests.
 
@@ -1557,6 +1828,11 @@ Do not send notifications synchronously from business requests.
 # 24. Phase 18 — Dashboard
 
 ## TASK-180 — KPI Summary
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No KPI APIs/dashboard widgets. Implement actual permission-filtered enquiry/quotation/project/complaint/engineer/AMC/warranty summaries.
+Evidence and remaining acceptance: [task-180 verification](docs/verification/task-180.md).
 
 Examples:
 
@@ -1574,6 +1850,11 @@ Warranty Cases
 
 ## TASK-181 — Work Needing Attention
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No attention feed. Implement real overdue follow-up/SLA/project/work/AMC exceptions with bounded authorized queries.
+Evidence and remaining acceptance: [task-181 verification](docs/verification/task-181.md).
+
 Show exceptions:
 
 - overdue follow-ups
@@ -1586,6 +1867,11 @@ Show exceptions:
 
 ## TASK-182 — Engineer Overview
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No engineer overview. Implement available/working/scheduled/overloaded summaries from actual schedules/jobs.
+Evidence and remaining acceptance: [task-182 verification](docs/verification/task-182.md).
+
 Show:
 
 - available
@@ -1597,6 +1883,11 @@ Show:
 
 ## TASK-183 — Commercial Pipeline
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No commercial pipeline dashboard. Implement real enquiry/quotation totals and meaningful lazy visualizations.
+Evidence and remaining acceptance: [task-183 verification](docs/verification/task-183.md).
+
 Show useful pipeline only.
 
 Avoid decorative charts.
@@ -1604,6 +1895,11 @@ Avoid decorative charts.
 ---
 
 ## TASK-184 — Dashboard Performance
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No dashboard to benchmark. Build independently loading bounded widgets and verify no sequential-query/huge-payload bottleneck.
+Evidence and remaining acceptance: [task-184 verification](docs/verification/task-184.md).
 
 Dashboard widgets should load independently.
 
@@ -1614,6 +1910,11 @@ Do not create one huge endpoint with many sequential queries.
 # 25. Phase 19 — Global Search
 
 ## TASK-190 — Global Search
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No global search API/UI. Implement all documented entities with authorization-filtered indexes and bounded category results.
+Evidence and remaining acceptance: [task-190 verification](docs/verification/task-190.md).
 
 Search:
 
@@ -1637,6 +1938,11 @@ AMC
 
 ## TASK-191 — Search Ranking
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No ranking implementation. Prioritize exact record IDs/serials and test relevance.
+Evidence and remaining acceptance: [task-191 verification](docs/verification/task-191.md).
+
 Exact IDs first.
 
 Examples:
@@ -1650,6 +1956,11 @@ CH-03
 ---
 
 ## TASK-192 — Search Performance
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No production-scale search measurement. Verify useful results under one second with representative data and concurrency.
+Evidence and remaining acceptance: [task-192 verification](docs/verification/task-192.md).
 
 Target useful results:
 
@@ -1665,6 +1976,11 @@ for normal production data.
 
 ## TASK-200 — Complaint Reports
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No complaint reports. Build backlog/SLA/resolution/priority queries, views and export permissions.
+Evidence and remaining acceptance: [task-200 verification](docs/verification/task-200.md).
+
 - backlog
 - SLA
 - resolution time
@@ -1673,6 +1989,11 @@ for normal production data.
 ---
 
 ## TASK-201 — Engineer Reports
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No engineer reports. Build workload/completed/response/first-time-fix calculations from verified jobs.
+Evidence and remaining acceptance: [task-201 verification](docs/verification/task-201.md).
 
 - workload
 - completed jobs
@@ -1683,6 +2004,11 @@ for normal production data.
 
 ## TASK-202 — Asset Reports
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No asset reports. Build service/repeat-failure/warranty-expiry views with authorized scope.
+Evidence and remaining acceptance: [task-202 verification](docs/verification/task-202.md).
+
 - repeat failures
 - service history
 - warranty expiry
@@ -1690,6 +2016,11 @@ for normal production data.
 ---
 
 ## TASK-203 — AMC Reports
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No AMC reports. Build due/missed/expiry/renewal calculations and views.
+Evidence and remaining acceptance: [task-203 verification](docs/verification/task-203.md).
 
 - due PM
 - missed visits
@@ -1700,6 +2031,11 @@ for normal production data.
 
 ## TASK-204 — Commercial Reports
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No commercial reports. Build enquiry/follow-up/conversion/won-lost calculations and views.
+Evidence and remaining acceptance: [task-204 verification](docs/verification/task-204.md).
+
 - enquiries
 - quotation follow-up
 - conversion
@@ -1708,6 +2044,11 @@ for normal production data.
 ---
 
 ## TASK-205 — Large Export Worker
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No large export worker. Implement asynchronous Excel/CSV/PDF jobs, bounded resources, permission-checked private downloads and retries.
+Evidence and remaining acceptance: [task-205 verification](docs/verification/task-205.md).
 
 Large:
 
@@ -1722,6 +2063,11 @@ must run asynchronously.
 # 27. Phase 21 — Audit
 
 ## TASK-210 — Audit Events
+
+Status: IN_PROGRESS
+
+Reconciled 6 October 2026: Append-only storage and authentication/security events exist. Add quotation/complaint/warranty/work-order/AMC business producers and complete actor/entity/before-after coverage.
+Evidence and remaining acceptance: [task-210 verification](docs/verification/task-210.md).
 
 Track important actions:
 
@@ -1740,6 +2086,11 @@ AMC_UPDATED
 
 ## TASK-211 — Audit Viewer
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No audit viewer API/UI. Add authorized Management/Super Admin pagination/filtering and safe redacted details.
+Evidence and remaining acceptance: [task-211 verification](docs/verification/task-211.md).
+
 Authorized management/admin users only.
 
 ---
@@ -1748,8 +2099,10 @@ Authorized management/admin users only.
 
 ## TASK-220 — Database Backup
 
-Status: BLOCKED — backup ownership, retention, RPO/RTO and a controlled restore
-environment require confirmation. Provider availability alone is not a tested backup.
+Status: BACKLOG
+
+Reconciled 6 October 2026: No automated database backup configuration/artifacts/monitoring. Implement safe configurable retention/encryption/storage; confirm owner and contractual RPO/RTO for final production acceptance.
+Evidence and remaining acceptance: [task-220 verification](docs/verification/task-220.md).
 
 Configure automated backups.
 
@@ -1757,8 +2110,10 @@ Configure automated backups.
 
 ## TASK-221 — Document Backup
 
-Status: BLOCKED — approved document retention/recovery policy and controlled
-backup/restore storage are required.
+Status: BACKLOG
+
+Reconciled 6 October 2026: No document backup/redundancy/retention/monitoring. Configure separate recoverable copies and validate them; do not infer retention promises.
+Evidence and remaining acceptance: [task-221 verification](docs/verification/task-221.md).
 
 Ensure file redundancy.
 
@@ -1766,8 +2121,10 @@ Ensure file redundancy.
 
 ## TASK-222 — Restore Test
 
-Status: BLOCKED — requires approved recovery objectives and actual backup
-artifacts plus an isolated restore environment; no restore success is fabricated.
+Status: BLOCKED
+
+Reconciled 6 October 2026: No actual backup artifacts supplied/generated for recovery verification. Restore database and documents into controlled isolation and verify application/data consistency before acceptance.
+Evidence and remaining acceptance: [task-222 verification](docs/verification/task-222.md).
 
 Actually restore from backup.
 
@@ -1777,8 +2134,10 @@ Do not consider backup complete until restore is tested.
 
 ## TASK-223 — Recovery Documentation
 
-Status: BLOCKED — recovery ownership and approved tested procedures are
-unconfirmed; a generic runbook cannot substitute for them.
+Status: BLOCKED
+
+Reconciled 6 October 2026: Recovery owner, backup locations and an actually tested procedure remain unconfirmed. A generic runbook cannot complete final recovery documentation.
+Evidence and remaining acceptance: [task-223 verification](docs/verification/task-223.md).
 
 Document:
 
@@ -1795,6 +2154,11 @@ What happens after failure?
 
 ## TASK-230 — API Profiling
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No representative API p50/p95/p99 benchmark. Establish realistic volume/concurrency and measure current/future integrated workflows.
+Evidence and remaining acceptance: [task-230 verification](docs/verification/task-230.md).
+
 Measure:
 
 ```text
@@ -1807,6 +2171,11 @@ p99
 
 ## TASK-231 — Query Review
 
+Status: IN_PROGRESS
+
+Reconciled 6 October 2026: Current pool/index/list/auth queries reviewed statically. Add representative EXPLAIN/ANALYZE, slow-query and N+1 measurements for business modules; current user prefix search/count still needs scale review.
+Evidence and remaining acceptance: [task-231 verification](docs/verification/task-231.md).
+
 Check:
 
 - N+1
@@ -1817,6 +2186,11 @@ Check:
 ---
 
 ## TASK-232 — Frontend Bundle Review
+
+Status: IN_PROGRESS
+
+Reconciled 6 October 2026: Current manifests/routes/assets inspected. Complete per-route compressed bundle/duplicate-code budgets and regression review after operational routes exist; no whole-product size target claimed.
+Evidence and remaining acceptance: [task-232 verification](docs/verification/task-232.md).
 
 Check:
 
@@ -1829,17 +2203,32 @@ Check:
 
 ## TASK-233 — Dashboard Load Test
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No actual dashboard load test. Requires functioning widgets and realistic authorized data/concurrency.
+Evidence and remaining acceptance: [task-233 verification](docs/verification/task-233.md).
+
 Use realistic data.
 
 ---
 
 ## TASK-234 — Mobile Performance Test
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: Four viewport UI checks passed; no weak-network production-equivalent mobile performance measurements.
+Evidence and remaining acceptance: [task-234 verification](docs/verification/task-234.md).
+
 Test slower mobile connection.
 
 ---
 
 ## TASK-235 — Search Performance Test
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No actual search engine or realistic-volume latency test.
+Evidence and remaining acceptance: [task-235 verification](docs/verification/task-235.md).
 
 Test realistic production-size records.
 
@@ -1849,11 +2238,21 @@ Test realistic production-size records.
 
 ## TASK-240 — Authorization Review
 
+Status: IN_PROGRESS
+
+Reconciled 6 October 2026: Current auth/admin API denials, mutations and last-admin races verified. Extend to every business endpoint, all roles and production least-privilege DB deployment.
+Evidence and remaining acceptance: [task-240 verification](docs/verification/task-240.md).
+
 Test every important endpoint.
 
 ---
 
 ## TASK-241 — Object-Level Access
+
+Status: IN_PROGRESS
+
+Reconciled 6 October 2026: Engineer assignment/ownership policy foundation tested. Actual customer/site/asset/work-order/file repository joins and changed-ID attacks remain unimplemented/unverified.
+Evidence and remaining acceptance: [task-241 verification](docs/verification/task-241.md).
 
 Example:
 
@@ -1863,11 +2262,21 @@ Engineer cannot access another restricted work order by changing URL ID.
 
 ## TASK-242 — File Security
 
+Status: IN_PROGRESS
+
+Reconciled 6 October 2026: Storage unit denial/stream/signing/path checks and historical live private-file evidence exist. Actual authenticated document/job access and production file threat review remain.
+Evidence and remaining acceptance: [task-242 verification](docs/verification/task-242.md).
+
 Test unauthorized file access.
 
 ---
 
 ## TASK-243 — Error Leak Testing
+
+Status: IN_PROGRESS
+
+Reconciled 6 October 2026: Safe startup/API/provider/database/queue errors tested and secrets scanned. Complete deployed-domain error/leak tests after domain APIs exist.
+Evidence and remaining acceptance: [task-243 verification](docs/verification/task-243.md).
 
 Ensure responses do not expose:
 
@@ -1879,6 +2288,11 @@ Ensure responses do not expose:
 ---
 
 ## TASK-244 — Dependency Review
+
+Status: IN_PROGRESS
+
+Reconciled 6 October 2026: Dependency audit reports zero known advisories and current package boundaries are tested. Review unused imports/manifests, update/maintenance status and compatibility patches before full release acceptance.
+Evidence and remaining acceptance: [task-244 verification](docs/verification/task-244.md).
 
 Remove:
 
@@ -1892,6 +2306,11 @@ Remove:
 # 31. Phase 25 — Testing
 
 ## TASK-250 — Core E2E Flows
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No integrated enquiry→quotation→project or complaint→work→report or AMC→PM end-to-end product flow. Auth API and UI fixtures are narrower acceptance.
+Evidence and remaining acceptance: [task-250 verification](docs/verification/task-250.md).
 
 Test:
 
@@ -1920,11 +2339,21 @@ AMC
 
 ## TASK-251 — Desktop Testing
 
+Status: IN_PROGRESS
+
+Reconciled 6 October 2026: Implemented screens tested at desktop/wide sizes. Actual business workflows and authenticated browser-to-real-API administration/invitation remain to be covered.
+Evidence and remaining acceptance: [task-251 verification](docs/verification/task-251.md).
+
 Test supported desktop sizes.
 
 ---
 
 ## TASK-252 — Mobile Testing
+
+Status: IN_PROGRESS
+
+Reconciled 6 October 2026: Implemented auth/admin/shared screens tested with mobile bottom navigation/cards. Engineer execution, documents/signature/photo flows and real devices/networks remain.
+Evidence and remaining acceptance: [task-252 verification](docs/verification/task-252.md).
 
 Test:
 
@@ -1942,11 +2371,21 @@ Mobile cannot be accepted if it is merely desktop stacked vertically.
 
 ## TASK-253 — Permission Testing
 
+Status: IN_PROGRESS
+
+Reconciled 6 October 2026: Approved matrix, object foundations and current HTTP auth/admin permissions tested. Complete all eight-role business/entity/field/export permission coverage.
+Evidence and remaining acceptance: [task-253 verification](docs/verification/task-253.md).
+
 Test each major role.
 
 ---
 
 ## TASK-254 — Error Testing
+
+Status: IN_PROGRESS
+
+Reconciled 6 October 2026: Implemented loading/retry/generic auth/provider/SQL/queue errors tested. Complete domain invalid-state/conflict/error recovery and actual email failure UX.
+Evidence and remaining acceptance: [task-254 verification](docs/verification/task-254.md).
 
 Test:
 
@@ -1963,8 +2402,10 @@ Test:
 
 ## TASK-260 — Client Test Environment
 
-Status: BLOCKED — approved client test environment/accounts and functioning
-protected workflows are required. A component preview is not a UAT environment.
+Status: BACKLOG
+
+Reconciled 6 October 2026: No complete client test environment with realistic operational workflows/data. Provision controlled UAT environment after integrated modules exist.
+Evidence and remaining acceptance: [task-260 verification](docs/verification/task-260.md).
 
 Prepare realistic staging environment.
 
@@ -1972,7 +2413,10 @@ Prepare realistic staging environment.
 
 ## TASK-261 — Client Workflow Testing
 
-Status: BLOCKED — requires actual Airmech participation and integrated workflows.
+Status: BLOCKED
+
+Reconciled 6 October 2026: Actual client workflow participation and signoff are unavailable; automated fixtures cannot substitute for UAT.
+Evidence and remaining acceptance: [task-261 verification](docs/verification/task-261.md).
 
 Airmech tests:
 
@@ -1990,6 +2434,11 @@ Reports
 
 ## TASK-262 — UAT Issues
 
+Status: BACKLOG
+
+Reconciled 6 October 2026: No actual UAT findings logged because client UAT has not occurred. Triage/fix/retest real issues by severity.
+Evidence and remaining acceptance: [task-262 verification](docs/verification/task-262.md).
+
 Classify:
 
 ```text
@@ -2006,8 +2455,10 @@ Enhancement
 
 ## TASK-270 — Production Environment
 
-Status: BLOCKED — approved deployment configuration, access and environment
-decisions are required; existing Supabase infrastructure is not an application deployment.
+Status: BLOCKED
+
+Reconciled 6 October 2026: Production domain/origins/session/SMTP/least-privilege DB/Redis/monitoring/backup configuration and deployment approval remain unavailable. Existing Supabase infrastructure is not an app deployment.
+Evidence and remaining acceptance: [task-270 verification](docs/verification/task-270.md).
 
 Configure:
 
@@ -2022,8 +2473,10 @@ Configure:
 
 ## TASK-271 — Data Migration
 
-Status: BLOCKED — actual source data/format/volume, mapping and migration
-approval are unavailable. No historical data was deleted or fabricated.
+Status: BLOCKED
+
+Reconciled 6 October 2026: Historical source records/formats/volumes, approved mapping and import authorization are unavailable. Import and validate actual counts without destructive resets.
+Evidence and remaining acceptance: [task-271 verification](docs/verification/task-271.md).
 
 Import approved historical data.
 
@@ -2032,6 +2485,11 @@ Validate counts.
 ---
 
 ## TASK-272 — Production Smoke Test
+
+Status: BACKLOG
+
+Reconciled 6 October 2026: No application deployed to production. Verify actual login/customer/enquiry/complaint/assignment/AMC/file/report/notification flows after approved deployment.
+Evidence and remaining acceptance: [task-272 verification](docs/verification/task-272.md).
 
 Verify:
 
@@ -2051,8 +2509,10 @@ Notifications
 
 ## TASK-273 — Training
 
-Status: BLOCKED — actual client participation and verified operational workflows
-are required before training can be completed.
+Status: BLOCKED
+
+Reconciled 6 October 2026: Client training participation and complete operational workflows are required. Prepare role-specific material and conduct actual training.
+Evidence and remaining acceptance: [task-273 verification](docs/verification/task-273.md).
 
 Train:
 
@@ -2066,8 +2526,10 @@ Train:
 
 ## TASK-274 — Go Live
 
-Status: BLOCKED — requires approved UAT, security/performance acceptance,
-tested recovery/migration, monitoring and deployment authorization.
+Status: BLOCKED
+
+Reconciled 6 October 2026: Requires actual approved UAT, complete security/performance acceptance, verified backup/restore/migration/monitoring and explicit go-live approval.
+Evidence and remaining acceptance: [task-274 verification](docs/verification/task-274.md).
 
 Release after:
 

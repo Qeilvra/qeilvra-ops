@@ -36,7 +36,10 @@ test(
       );
       async function rejectsStatement(sql, values, code) {
         await connection.query("SAVEPOINT expected_failure");
-        await assert.rejects(connection.query(sql, values), { code });
+        await assert.rejects(connection.query(sql, values), (error) => {
+          assert.ok((Array.isArray(code) ? code : [code]).includes(error.code));
+          return true;
+        });
         await connection.query("ROLLBACK TO SAVEPOINT expected_failure");
         await connection.query("RELEASE SAVEPOINT expected_failure");
       }
@@ -72,7 +75,8 @@ test(
         "INSERT INTO airmech.notifications (recipient_id,channel,title,message,deduplication_key) VALUES ($1,'email','Email model fixture','No email is sent',$2)",
         [userId, key],
       );
-      await rejectsStatement("DELETE FROM airmech.users WHERE id=$1", [userId], "23503");
+      // PostgreSQL 18 distinguishes RESTRICT violations from missing foreign keys.
+      await rejectsStatement("DELETE FROM airmech.users WHERE id=$1", [userId], ["23503", "23001"]);
       const security = await connection.query(
         "SELECT relrowsecurity FROM pg_class JOIN pg_namespace n ON n.oid=relnamespace WHERE n.nspname='airmech' AND relname='notifications'",
       );

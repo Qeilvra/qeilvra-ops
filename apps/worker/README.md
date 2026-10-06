@@ -1,14 +1,15 @@
 # Airmech One Worker
 
-TASK-001 establishes a separate background-process application. It remains idle
-with an internal HTTP liveness server; no jobs are accepted or processed.
+The background application exposes internal HTTP liveness and, when configured,
+consumes Redis-backed system healthchecks and authentication delivery records.
+Authentication email runs outside HTTP requests through the Supabase adapter.
 
 `GET /health` returns the shared process-liveness contract. It proves only that
 this process can respond. It does not claim Redis connectivity, queue readiness,
 active consumers, or working report/notification processing.
 
-TASK-006 must add the Redis/BullMQ connection and queue lifecycle before any
-business module queues work. Report, notification, document, and AMC processors
+TASK-006 provides verified Redis/BullMQ connections and queue lifecycle.
+General report, notification, document, and AMC processors
 belong to their later tasks. Do not claim business automation is available from
 this application foundation.
 

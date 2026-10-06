@@ -1,139 +1,53 @@
 # Phase 1 implementation status
 
-Assessment: 5 October 2026. TASK-001–008 remain the completed foundation; there is
-no TASK-009. The user's continuation instruction authorizes TASK-010–274, excluding
-product Phase 2. Task numbers describe delivery stages within Phase 1.
+Assessment: 6 October 2026, based on the [full engineering reconciliation](verification/full-reconciliation.md). This replaces the superseded 5 October blanket blockers. No TASK-009 exists; delivery-stage numbers belong to product Phase 1. Product Phase 2 remains excluded.
 
-## Current independent work
+## Task totals
 
-TASK-010/TASK-011: DONE. The profile/role migration and typed repository passed
-real disposable PostgreSQL checks in [hosted CI](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37341781398).
-TASK-023: DONE, real shared controls and browser specimens verified by the full
-quality gate. TASK-030: DONE, customer model/contact ownership and real SQL checks
-passed in [hosted CI](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37343170184).
-No new migration has been run on Supabase.
+| State       | Count |
+| ----------- | ----: |
+| DONE        |    18 |
+| IN_PROGRESS |    13 |
+| REVIEW      |     3 |
+| BLOCKED     |     8 |
+| READY       |     1 |
+| BACKLOG     |    90 |
+| Total       |   133 |
 
-TASK-170 is DONE: Phase 1 notification records and actual
-disposable PostgreSQL tests passed without selecting recipients or sending
-messages. TASK-171/TASK-172 remain BLOCKED on authenticated entity/event policy
-and verified provider delivery. This is model work, not a completed notification module.
+**18 / 133 = 13.533834586466165%, rounded to 13.5%.** 115 tasks remain not DONE. Task-count percentage does not equal engineering-hours percentage. Partial implementations are excluded from DONE.
 
-## Decisions that block protected workflows
+## Verified scope
 
-The source documents explicitly leave these unconfirmed. Questions have been
-sent to the project owner; no answer has been treated as approval.
+TASK-001, TASK-002, TASK-003, TASK-004, TASK-005, TASK-006, TASK-007, TASK-008, TASK-010, TASK-012, TASK-013, TASK-016, TASK-017, TASK-021, TASK-022, TASK-023, TASK-030, TASK-170. Newly accepted: TASK-004, TASK-012, TASK-013, TASK-016, TASK-017, TASK-021, TASK-022. TASK-011 is REVIEW because role-level activation is absent; historical model-only verification remains valid at its narrower scope.
 
-| Tasks/batch           | Required external decision or prerequisite                                                                                                                                                  |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TASK-012, 015, 016    | Approved role → permission grants, object visibility/ownership, role-administration limits and first-administrator identity/provisioning                                                    |
-| TASK-013, 014, 017    | Supabase Auth account/provisioning policy and actual controlled login/reset verification; approved redirect origin, reset email delivery and session policy; complete event-producing flows |
-| TASK-020–022          | Current authenticated profile and approved role navigation; shared UI can proceed independently                                                                                             |
-| TASK-031–035, 041–044 | Protected authenticated APIs and approved customer/enquiry visibility, assignment and follow-up policy                                                                                      |
-| TASK-050–056          | Currency/tax/numbering and approved quotation approval/revision/customer-visible rules                                                                                                      |
-| TASK-060–073          | Approved protected project/asset access and verified upstream quotation/customer flows                                                                                                      |
-| TASK-080–092          | Confirmed complaint intake, priority/SLA calendars, product/brand warranty rules and override authority                                                                                     |
-| TASK-100–125          | Approved engineer job visibility/assignment and verified complaint/work-order transitions                                                                                                   |
-| TASK-130–152          | Confirmed AMC frequencies and renewal policies, service-report format/signature requirements and upstream work-order flows                                                                  |
-| TASK-160–192          | Authorized real business entities, notification recipients/provider settings and verified permission-filtered data sources                                                                  |
-| TASK-200–223          | Approved report visibility, backup ownership/retention/RPO/RTO and a controlled restore environment                                                                                         |
-| TASK-230–254          | Functioning integrated business workflows, realistic data volumes and measured production-equivalent performance                                                                            |
-| TASK-260–274          | Client UAT participation/signoff, deployment configuration/approval, real migration sources and training/go-live participation                                                              |
+Real disposable PostgreSQL/Redis checks exercise actual migrations/API guards/admin/recovery/audit/queue behavior. Approved real temporary Supabase identity verified API login, engineer mapping, protected profile/admin denial, logout/invalid/disabled denial and confirmed deletion. Cloud application schema is absent; only migration 0001 is deployed. Storage privacy is currently checked read-only, with previous live object/signing/expiry evidence retained.
 
-These prerequisites do not count as implementation or verification. Unstarted
-tasks remain BACKLOG; tasks whose specific work is blocked record BLOCKED in
-`Task.md`. Domain models must be inspected individually before implementation;
-this table does not authorize invented fields, policies or bulk completion.
+## Implemented acceptance gaps
 
-## Identity engineering assessment
+- **TASK-011:** Eight stable approved lower-case role codes, names, grants and replay are verified. Role-level active/inactive state required by this audit is absent; add and verify lifecycle enforcement before DONE. Historical model-only DONE is narrower.
+- **TASK-014:** PKCE recovery, generic request, replay/session revocation and reset UI pass controlled fixtures. Actual recovery email, approved provider redirect/template and delivered-link password reset remain unverified.
+- **TASK-015:** Real SQL/API list/search/status filter, profile edits, enable/disable, role assignment/removal, last-admin/concurrency protections and fixture invites pass. Real invite delivery/setup remains unverified; empty out-of-range pages currently lose total count; resend invitation lacks a UI action.
+- **TASK-020:** Sidebar/header/workspace/account/sign-out/loading/retry exist. Add actual user menu, search and notification entries with integrated navigation; no fabricated domain links.
 
-Supabase Auth is appropriate as the existing provider for credentials, identity,
-recovery and session mechanics. The application profile and RBAC remain in
-PostgreSQL and every protected API must resolve current status/grants and apply
-an object policy. A frontend session or role name never grants access. There is
-no competing password/JWT issuer, automatic admin or business endpoint yet.
+Dedicated bottom navigation and responsive implemented pages are verified; engineer job/field-work screens and operational modules are not. Customer/contact and notification models do not complete those modules. Final quality verification passed: 54 unit, 25 integration, three startup and 52 browser checks; build/lint/format/strict types/audit passed. Isolated live verification passed 19 cases with two intentional cloud skips, and separately authorized real provider verification passed three provider cases. Exact commands and fixture boundaries are recorded in the full report.
 
-Before login implementation, record the deployment origin/proxy/session/CSRF
-design and verify actual provider settings and controlled test identities. Do
-not change provider accounts or create a first administrator from an assumption.
+## Approved decisions and blockers
 
-Provider references: [server-side identity/session verification](https://supabase.com/docs/guides/auth/server-side/advanced-guide),
-[session revocation](https://supabase.com/docs/guides/auth/sessions),
-[reset redirects](https://supabase.com/docs/guides/auth/redirect-urls) and
-[production SMTP configuration](https://supabase.com/docs/guides/auth/auth-smtp).
-These support the provider assessment; they do not establish Airmech's access policy.
+Role/permission baseline, engineer scope, localhost callbacks and temporary test identity are approved in decision 012. Owner-confirmed Service Manager field edits and Project Manager managed-project-only/no-customer-creation rules are recorded in decision 013 and must be enforced by future owning APIs. Do not reinstate those as missing-policy blockers. Actual record/field enforcement is still absent in customer modules.
 
-## Verification environment
+- **TASK-053 — Approval Workflow:** Approval hierarchy, tiers, thresholds, discount limits and approvers are unconfirmed. Configurable scaffolding can proceed; final actual approval-policy acceptance is blocked.
+- **TASK-222 — Restore Test:** No actual backup artifacts supplied/generated for recovery verification. Restore database and documents into controlled isolation and verify application/data consistency before acceptance.
+- **TASK-223 — Recovery Documentation:** Recovery owner, backup locations and an actually tested procedure remain unconfirmed. A generic runbook cannot complete final recovery documentation.
+- **TASK-261 — Client Workflow Testing:** Actual client workflow participation and signoff are unavailable; automated fixtures cannot substitute for UAT.
+- **TASK-270 — Production Environment:** Production domain/origins/session/SMTP/least-privilege DB/Redis/monitoring/backup configuration and deployment approval remain unavailable. Existing Supabase infrastructure is not an app deployment.
+- **TASK-271 — Data Migration:** Historical source records/formats/volumes, approved mapping and import authorization are unavailable. Import and validate actual counts without destructive resets.
+- **TASK-273 — Training:** Client training participation and complete operational workflows are required. Prepare role-specific material and conduct actual training.
+- **TASK-274 — Go Live:** Requires actual approved UAT, complete security/performance acceptance, verified backup/restore/migration/monitoring and explicit go-live approval.
 
-Docker Desktop's local image store returned `read-only file system` while pulling
-PostgreSQL and Redis. No images, volumes or existing containers were deleted.
-Use the existing hosted workflow's disposable services to verify the new migration
-after local checks and secret scanning. This is not a reason to weaken TLS,
-replace the database, reset production or pretend SQL tests passed.
+Unconfirmed quotation/SLA/product coverage/AMC/report/recovery production values are exact acceptance gaps. Configurable structures can proceed. Unstarted implementation is BACKLOG rather than automatically BLOCKED.
 
-## Production readiness
+## Production readiness and next work
 
-The foundation is verified; the Phase 1 product, protected workflows, production
-deployment, disaster recovery, client UAT and go-live are not complete.
+The foundation and current scope are accepted; complete Phase 1 business workflows, least-privilege deployment, new cloud migrations, email delivery, recovery, realistic-scale performance/security, UAT and go-live remain incomplete. Latest hosted green run is [37353625020](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37353625020) for prior commit 72649ca; it does not verify local WIP/reconciliation.
 
-## Batch acceptance record
-
-| Batch            | DONE     | BLOCKED                                           | Other tasks                                     |
-| ---------------- | -------- | ------------------------------------------------- | ----------------------------------------------- |
-| 2, TASK-010–017  | 010, 011 | 012–017                                           | None                                            |
-| 3, TASK-020–023  | 023      | 020–022                                           | None                                            |
-| 4, TASK-030–035  | 030      | 031–035                                           | None                                            |
-| 5, TASK-040–044  | None     | Upstream customer/site/auth policy                | BACKLOG                                         |
-| 6, TASK-050–056  | None     | 050, 053                                          | BACKLOG pending money/approval policy           |
-| 7, TASK-060–065  | None     | Upstream quotation/access policy                  | BACKLOG                                         |
-| 8, TASK-070–073  | None     | Upstream site/coverage/access policy              | BACKLOG                                         |
-| 9, TASK-080–092  | None     | 083, 090–092                                      | BACKLOG pending intake/SLA/coverage             |
-| 10, TASK-100–125 | None     | Upstream identity/service/assignment policy       | BACKLOG                                         |
-| 11, TASK-130–152 | None     | 131, 134, 151                                     | BACKLOG pending schedule/report decisions       |
-| 12, TASK-160–192 | None     | Upstream authorized real entities/data            | BACKLOG                                         |
-| 13, TASK-200–223 | None     | 220–223                                           | BACKLOG pending verified report/audit workflows |
-| 14, TASK-230–254 | None     | Integrated workflows/realistic volume unavailable | BACKLOG                                         |
-| 15, TASK-260–274 | None     | 260, 261, 270, 271, 273, 274                      | BACKLOG pending client/UAT/production           |
-
-No omitted task number is invented. The ranges identify batches, not missing
-tasks between their documented groups. An upstream blocker does not claim that
-every later task was attempted or individually marked BLOCKED.
-
-### Shared verification, security and performance
-
-Local full gate: build, formatting, lint, typecheck, unit/integration, startup,
-desktop/tablet/mobile browser tests and audit passed. Baseline: 66 + 3 + 18 tests;
-two mutation-boundary unit regressions subsequently passed (68 unit/integration).
-Hosted runs additionally exercised real migrations and PostgreSQL/Redis. Storage
-remains separately verified foundation infrastructure; hosted tests intentionally
-skip cloud storage rather than load production credentials.
-
-New migrations 0002–0004 were only applied to disposable PostgreSQL, including
-the notification checks in hosted run 37347519561. Migration 0001's
-checksum is preserved. Identity/user grants resolve in one parameterized indexed
-query with the existing pool. No business APIs, implicit super-admin authority,
-browser server secrets, provider accounts or production grants were introduced.
-Audit records reject update/delete/truncate. Additional regression coverage
-verifies actual RLS denial to a non-owner role even with SELECT privileges.
-
-The [mutation-safety and RLS run](https://github.com/Qeilvra/qeilvra-ops/actions/runs/37345038843)
-passed at implementation commit `2988374`: 68 unit/integration, three startup,
-eighteen browser and eight live PostgreSQL/Redis checks. One cloud-storage test
-was explicitly skipped by the established hosted environment. Configured server
-secrets were absent from its logs.
-
-Shared UI adds no dependency; bounded table/card pages, native fields/dialogs,
-system fonts and static specimen routes preserve the current startup behavior.
-Production-scale latency, domain E2E/security acceptance and field-device network
-testing remain incomplete. No whole-product performance/security approval is claimed.
-
-### Technical debt and readiness
-
-The owner approved the Phase 1 role matrix, engineer assignment scope, final
-Super Admin protection, configurable bootstrap identity, localhost development
-callbacks and a temporary provider test account. Authentication work can proceed;
-production bootstrap credentials and SMTP delivery still require local setup.
-Establish least-privilege API
-DB credentials and approve deployment of new migrations. Repair Docker Desktop's
-read-only image store for convenient local service verification; hosted verification
-provides actual SQL evidence meanwhile. Unstarted modules, restore procedures,
-client UAT, training, monitoring and production deployment remain required scope.
+Finish auth/admin/role/shell acceptance, then start READY TASK-031 only in the next development request. This audit starts no new major module. Every formal task has an exact acceptance gap in [the matrix](verification/full-reconciliation.md#complete-task-acceptance-matrix) and a per-task note.

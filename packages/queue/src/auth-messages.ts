@@ -40,16 +40,15 @@ export class AuthMessageProducer {
   #closed = false;
   readonly #prefix: string;
   readonly #report: QueueEventHandler;
-  constructor(
-    configuration: RedisConfiguration,
-    options: Options = {},
-  ) {
-    this.#configuration=configuration;
+  constructor(configuration: RedisConfiguration, options: Options = {}) {
+    this.#configuration = configuration;
     this.#prefix = validateQueuePrefix(options.prefix ?? DEFAULT_QUEUE_PREFIX);
     this.#report = options.onEvent ?? (() => undefined);
     if (configuration.enabled) requireRedisConfiguration(configuration);
   }
-  private get configuration(): RedisConfiguration { return this.#configuration; }
+  private get configuration(): RedisConfiguration {
+    return this.#configuration;
+  }
   async enqueue(recordId: string): Promise<void> {
     if (!UUID.test(recordId)) throw new QueueInfrastructureError("JOB_PROCESSING_FAILED");
     if (this.#closed) throw new QueueInfrastructureError("QUEUE_CLOSED");

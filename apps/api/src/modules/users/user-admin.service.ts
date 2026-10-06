@@ -66,8 +66,14 @@ export class UserAdministrationService {
     if ((rows[0]?.count ?? 0) < 1) throw new ConflictException();
   }
 
-  async list(page: number, search: string) {
-    if (!Number.isSafeInteger(page) || page < 1 || page > 1000 || search.length > 120)
+  async list(page: number, search: string, status = "") {
+    if (
+      !Number.isSafeInteger(page) ||
+      page < 1 ||
+      page > 1000 ||
+      search.length > 120 ||
+      !["", "active", "invited", "disabled"].includes(status)
+    )
       throw new BadRequestException();
     const items = await this.auth.databaseClient.query<{
       id: string;
@@ -83,11 +89,13 @@ export class UserAdministrationService {
       `SELECT u.id,u.email,u.display_name,u.status,u.employee_code,u.job_title,u.phone,
          ARRAY(SELECT ur.role_code FROM airmech.user_roles ur WHERE ur.user_id=u.id ORDER BY ur.role_code) AS roles,
          count(*) OVER()::integer AS total FROM airmech.users u
-       WHERE $1='' OR lower(u.email) LIKE lower($1)||'%' OR lower(u.display_name) LIKE lower($1)||'%'
+       WHERE ($1='' OR lower(u.email) LIKE lower($1)||'%' OR lower(u.display_name) LIKE lower($1)||'%')
+         AND ($3='' OR u.status=$3)
        ORDER BY u.created_at DESC,u.id LIMIT 25 OFFSET $2`,
       [
         search.replaceAll("\\", "\\\\").replaceAll("%", "\\%").replaceAll("_", "\\_"),
         (page - 1) * 25,
+        status,
       ],
     );
     return { items, page, pageSize: 25, total: items[0]?.total ?? 0 };
