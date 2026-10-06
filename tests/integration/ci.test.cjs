@@ -9,6 +9,9 @@ const source = fs.readFileSync(path.join(workspace, ".github/workflows/ci.yml"),
 const document = parseDocument(source, { uniqueKeys: true, version: "1.2" });
 const workflow = document.toJS({ maxAliasCount: 0 });
 const manifest = JSON.parse(fs.readFileSync(path.join(workspace, "package.json"), "utf8"));
+const webDeployment = JSON.parse(
+  fs.readFileSync(path.join(workspace, "apps/web/vercel.json"), "utf8"),
+);
 
 function runStep(command) {
   const steps = workflow.jobs.quality.steps.filter((step) => step.run === command);
@@ -71,6 +74,22 @@ test("CI installs once from the lockfile and reuses the project's complete quali
     assert.equal(gate.filter((command) => command === `pnpm run ${script}`).length, 1);
   }
   assert.equal(gate[0], "pnpm run build", "build artifacts must exist before typed lint");
+  const webBuild = runStep(webDeployment.buildCommand);
+  assert.equal(webBuild["working-directory"], "apps/web");
+  assert.ok(steps.indexOf(webBuild) > steps.indexOf(runStep("pnpm install --frozen-lockfile")));
+  assert.ok(
+    steps.indexOf(webBuild) < steps.indexOf(runStep("pnpm check")),
+    "The app-root build must run before the full build can hide missing workspace artifacts",
+  );
+  assert.equal(
+    webDeployment.installCommand,
+    undefined,
+    "Preserve Vercel's existing workspace/package-manager detection",
+  );
+  assert.equal(webDeployment.buildCommand, "pnpm --dir ../.. run build:web");
+  assert.match(manifest.scripts["build:web"], /--filter\s+"@airmech\/web\.\.\."/);
+  assert.match(manifest.scripts["build:web"], /--sort\s+run build$/);
+  assert.doesNotMatch(manifest.scripts["build:web"], /--parallel|--no-sort|--if-present/);
   const setup = steps.find((step) => step.uses?.startsWith("pnpm/action-setup@"));
   assert.equal(setup.with.run_install, false);
   assert.equal(setup.with.cache, true);

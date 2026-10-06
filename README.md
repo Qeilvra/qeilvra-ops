@@ -162,6 +162,11 @@ gaps for all 133 tasks are recorded in the reconciliation report.
 
 ## Workspace ownership
 
+For Vercel, keep Root Directory `apps/web` and use the committed app-root
+configuration to run `pnpm --dir ../.. run build:web`. The filtered root build
+compiles web workspace dependencies before Next.js loads its configuration.
+See [Vercel deployment settings and clean verification](docs/deployment-vercel.md).
+
 | Package              | Responsibility                                                       |
 | -------------------- | -------------------------------------------------------------------- |
 | `apps/web`           | Next.js responsive interface; accesses business data through the API |
