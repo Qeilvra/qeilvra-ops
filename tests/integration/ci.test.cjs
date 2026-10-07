@@ -79,6 +79,11 @@ test("CI installs once from the lockfile and reuses the project's complete quali
   assert.equal(gate[0], "pnpm run build", "build artifacts must exist before typed lint");
   const webBuild = runStep(webDeployment.buildCommand);
   assert.equal(webBuild["working-directory"], "apps/web");
+  assert.equal(
+    webBuild.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF,
+    "${{ github.head_ref || github.ref_name }}",
+    "The clean Vercel build must accept the actual preview branch metadata",
+  );
   assert.ok(steps.indexOf(webBuild) > steps.indexOf(runStep("pnpm install --frozen-lockfile")));
   assert.ok(
     steps.indexOf(webBuild) < steps.indexOf(runStep("pnpm check")),

@@ -58,7 +58,13 @@ dependency graph, and prevent scattered environment reads. Server config is
 allowed in the Node-only Next config file. Existing database, Node, and
 transport-contract boundaries remain enforced.
 
-Only `NEXT_PUBLIC_APP_NAME` is approved. Unknown `NEXT_PUBLIC_*` keys fail
+`NEXT_PUBLIC_APP_NAME` is the only application public setting. The exact documented
+[Vercel framework metadata keys](https://vercel.com/docs/environment-variables/framework-environment-variables)
+are also allowed and ignored by the application parser. They are optional: absent
+or empty Git metadata is accepted, branch refs retain valid Git characters such as
+`/`, and commit messages can contain multiple lines. They are not returned in the
+typed application configuration or used as security settings. This exception does
+not allow arbitrary `NEXT_PUBLIC_VERCEL_*` keys. Unknown `NEXT_PUBLIC_*` keys fail
 validation, including accidentally prefixed service-role or provider secrets.
 Supabase project URL and anon key are reserved server settings for now; browser
 Supabase access is unnecessary in the current API-oriented architecture.

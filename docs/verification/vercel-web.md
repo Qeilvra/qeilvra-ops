@@ -95,3 +95,66 @@ source option enabled as documented in [deployment setup](../deployment-vercel.m
 The JSON build command overrides the direct-Next default without changing app
 runtime behavior. Generated outputs remain ignored. Provider settings and
 hosted redeployment must use this repository revision to receive the fix.
+
+## Vercel metadata follow-up: 7 October 2026
+
+The resumed repository was clean on `feat/identity-access-and-shared-ui` at
+`e358b8e`. The owner supplied Vercel logs confirming the workspace build-order
+fix worked: config, contracts and UI completed before `next build`. The remaining
+failure named `NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF`.
+
+The cause was the public environment key allowlist, which rejected every key
+except `NEXT_PUBLIC_APP_NAME` before inspecting any branch value. The parser now
+allows the exact documented Vercel framework metadata keys and ignores their
+values because the application does not consume them. Git refs are not parsed
+as hostnames or application settings. Slash-containing branches, multiline
+commit messages, empty pull-request IDs, and absent metadata are accepted.
+The returned public configuration still contains only the validated app name.
+Unknown public keys, including arbitrary `NEXT_PUBLIC_VERCEL_*` keys, still fail;
+required provider settings and all unrelated security validation are unchanged.
+
+The unit regressions reproduced the original failure before the parser change.
+They cover slash, dot, underscore, plus, apostrophe and Unicode branch characters;
+undefined/empty metadata; the documented metadata set; public-secret rejection;
+and required application settings in the presence of deployment metadata.
+Integration probes load the actual Next config with present, empty and absent
+Git metadata and verify it adds only the app name to public environment keys.
+CI now supplies the actual PR/head branch to its existing clean Vercel web build.
+No branch name is hard-coded in the parser or CI configuration.
+
+Local verification used Node 24.14.0 and the existing pinned pnpm 10.34.6 runner.
+Before each clean build, all generated app/package `dist`, web `.next` and web
+build-info outputs were moved into a unique ignored workspace cache after
+checking their resolved paths. No source, environment file or existing work
+was discarded. Verified:
+
+- The exact `pnpm --dir ../.. run build:web` command from `apps/web` passed from
+  clean outputs with `NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF=feat/identity-access-and-shared-ui`
+  and the documented deployment metadata set, including a multiline commit
+  message and an empty pull-request ID.
+- The same command passed independently from clean outputs with all Vercel
+  metadata absent. Both runs built config, contracts and UI before Next, and
+  left unrelated backend package/app outputs absent.
+- `pnpm run build:packages` built all eight shared packages from clean outputs.
+- All 18 focused environment/runtime tests passed; the complete unit/integration
+  suite passed all 81 tests, including the Next config metadata probes. All
+  three compiled startup checks, lint, formatting and strict workspace/tooling
+  typechecks passed.
+- The final `pnpm check` passed in full from clean generated outputs: all eleven
+  app/package builds, lint, formatting, strict workspace/tooling types, 81
+  unit/integration tests, three startup checks, 52 browser checks and zero known
+  dependency advisories. No tests were skipped or validation rules disabled.
+
+Detailed logs and preserved generated outputs are ignored under
+`.cache/vercel-metadata`. The local runner explicitly trusts only this workspace
+for Git ownership checks; removing the sandbox's existing Git ownership setting
+initially caused the migration checkout test to fail before reading the index.
+The installed Chrome executable is selected through the existing
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE` override because bundled Playwright Chromium is
+not installed locally. These are local runner settings, not repository changes.
+
+`apps/web/vercel.json`, both app/root build scripts, dependency versions and
+the lockfile remain unchanged. A new Vercel Preview deployment must use the
+newly pushed feature-branch commit and the settings in
+[deployment setup](../deployment-vercel.md). Local success does not establish
+that the hosted Vercel deployment has completed successfully.

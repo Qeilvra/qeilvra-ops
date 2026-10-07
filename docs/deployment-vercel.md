@@ -80,6 +80,12 @@ The selector and dependency ordering follow
 ## Environment and backend
 
 Set public `NEXT_PUBLIC_APP_NAME` before the build if overriding its default.
+Vercel's documented `NEXT_PUBLIC_VERCEL_*` metadata is optional and ignored by
+application configuration. `NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF` accepts preview
+branch refs containing `/`; empty or absent Git metadata is accepted too. Do not
+manually set the current branch name or disable system metadata to work around
+validation. Unknown public keys and required application settings still fail
+validation as documented in [environment configuration](environment.md).
 The existing `API_INTERNAL_URL` is a server/build-only HTTPS origin for the
 separately deployed API; configure it for each Vercel environment. The loopback
 default is for local development. Preserve the existing authentication origin
@@ -92,7 +98,8 @@ into a deployment artifact.
 
 ## Verification
 
-CI runs the exact Vercel build command with working directory `apps/web` after
+CI runs the exact Vercel build command with working directory `apps/web` and the
+actual Git branch in `NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF` after
 the locked install and before the full repository build. Fresh CI checkouts
 and the pnpm store cache contain no committed workspace `dist` folders, so a
 direct-Next build regression cannot be hidden by the full build.

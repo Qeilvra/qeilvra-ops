@@ -165,16 +165,31 @@ test("the public configuration artifact graph contains no server imports or secr
   assert.ok(visited.size > 0);
 });
 
-test("Next exposes only the validated public app name without a legacy environment map", () => {
+test("Next validates the app name with optional Vercel metadata and no legacy environment map", () => {
   const probe = `const assert = require("node:assert/strict");
+    const publicKeys = Object.keys(process.env).filter((key) => key.startsWith("NEXT_PUBLIC_"));
     const imported = require(${JSON.stringify(path.join(workspace, "apps/web/next.config.ts"))});
     const configuration = imported.default ?? imported;
     assert.equal(configuration.env, undefined);
     assert.equal(process.env.NEXT_PUBLIC_APP_NAME, "Airmech One");
-    assert.deepEqual(Object.keys(process.env).filter((key) => key.startsWith("NEXT_PUBLIC_")), ["NEXT_PUBLIC_APP_NAME"]);`;
-  const result = runNode(["-e", probe]);
-  assert.equal(result.error, undefined);
-  assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(Object.keys(process.env).filter((key) => key.startsWith("NEXT_PUBLIC_")).sort(), [...publicKeys, "NEXT_PUBLIC_APP_NAME"].sort());
+    assert.deepEqual(require("@airmech/config/server").readWebConfiguration(process.env), { appName: "Airmech One" });`;
+  for (const metadata of [
+    {},
+    {
+      NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF: "feat/identity-access-and-shared-ui",
+      NEXT_PUBLIC_VERCEL_GIT_COMMIT_MESSAGE: "Fix preview\n\nBuild shared dependencies.\n",
+      NEXT_PUBLIC_VERCEL_GIT_COMMIT_AUTHOR_NAME: "Developer Name",
+      NEXT_PUBLIC_VERCEL_GIT_PULL_REQUEST_ID: "",
+    },
+    { NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF: "" },
+  ]) {
+    const result = runNode(["-e", probe], {
+      env: createTestEnvironment({ NODE_ENV: "production", ...metadata }, process.env),
+    });
+    assert.equal(result.error, undefined);
+    assert.equal(result.status, 0, result.stderr);
+  }
 });
 
 test("the environment example parses with inactive providers and contains no usable secrets", () => {

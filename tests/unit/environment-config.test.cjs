@@ -278,6 +278,91 @@ test("should validate the web environment without requiring backend provider set
   expectSettingError(() => readServerConfiguration("worker", { HOST: "host with spaces" }), "HOST");
 });
 
+test("should accept optional Vercel branch metadata without constraining Git branch characters", () => {
+  for (const branch of [
+    undefined,
+    "",
+    "feat/identity-access-and-shared-ui",
+    "release/v1.2.3",
+    "feature/issue_123+fix",
+    "feature/customer's-update",
+    "feature/更新",
+  ]) {
+    const environment = Object.freeze({ NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF: branch });
+    assert.deepEqual(readClientConfiguration(environment), { appName: "Airmech One" });
+    assert.deepEqual(readWebConfiguration(environment), { appName: "Airmech One" });
+    for (const service of ["api", "worker"]) {
+      assert.deepEqual(
+        readServerConfiguration(service, environment),
+        readServerConfiguration(service, {}),
+      );
+    }
+  }
+});
+
+test("should ignore documented Vercel metadata without exposing it as application configuration", () => {
+  const environment = Object.freeze({
+    NODE_ENV: "production",
+    NEXT_PUBLIC_APP_NAME: "Airmech Preview",
+    NEXT_PUBLIC_VERCEL_ENV: "preview",
+    NEXT_PUBLIC_VERCEL_TARGET_ENV: "staging/custom",
+    NEXT_PUBLIC_VERCEL_URL: "airmech-preview.vercel.app",
+    NEXT_PUBLIC_VERCEL_BRANCH_URL: "airmech-git-feature.vercel.app",
+    NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL: "airmech.vercel.app",
+    NEXT_PUBLIC_VERCEL_HASH_SALT: "1783933175",
+    NEXT_PUBLIC_VERCEL_GIT_PROVIDER: "github",
+    NEXT_PUBLIC_VERCEL_GIT_REPO_SLUG: "qeilvra-ops",
+    NEXT_PUBLIC_VERCEL_GIT_REPO_OWNER: "Qeilvra",
+    NEXT_PUBLIC_VERCEL_GIT_REPO_ID: "123456",
+    NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF: "feat/identity-access-and-shared-ui",
+    NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA: "a".repeat(40),
+    NEXT_PUBLIC_VERCEL_GIT_COMMIT_MESSAGE:
+      "Fix preview build\n\nPreserve strict application validation.\n",
+    NEXT_PUBLIC_VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "developer",
+    NEXT_PUBLIC_VERCEL_GIT_COMMIT_AUTHOR_NAME: "Developer Name",
+    NEXT_PUBLIC_VERCEL_GIT_PULL_REQUEST_ID: "",
+    VERCEL_GIT_COMMIT_REF: "feat/identity-access-and-shared-ui",
+  });
+  const publicConfiguration = readWebConfiguration(environment);
+  assert.deepEqual(publicConfiguration, { appName: "Airmech Preview" });
+  assert.ok(Object.isFrozen(publicConfiguration));
+  for (const service of ["api", "worker"]) {
+    assert.deepEqual(
+      readServerConfiguration(service, environment),
+      readServerConfiguration(service, { NODE_ENV: "production" }),
+    );
+    expectSettingError(
+      () => readServerConfiguration(service, { ...environment, DATABASE_ENABLED: "true" }),
+      "DATABASE_URL",
+    );
+    expectSettingError(
+      () => readServerConfiguration(service, { ...environment, AUTH_SECRET: "short" }),
+      "AUTH_SECRET",
+    );
+  }
+  expectSettingError(
+    () => readWebConfiguration({ ...environment, NEXT_PUBLIC_APP_NAME: "" }),
+    "NEXT_PUBLIC_APP_NAME",
+  );
+  for (const setting of [
+    "NEXT_PUBLIC_AUTH_SECRET",
+    "NEXT_PUBLIC_DATABASE_URL",
+    "NEXT_PUBLIC_VERCEL_AUTH_SECRET",
+    "NEXT_PUBLIC_VERCEL_DATABASE_URL",
+    "NEXT_PUBLIC_VERCEL_GIT_SECRET",
+    "NEXT_PUBLIC_VERCEL_OTHER",
+  ]) {
+    expectSettingError(
+      () => readWebConfiguration({ ...environment, [setting]: "fake-value" }),
+      setting,
+    );
+    expectSettingError(
+      () => readClientConfiguration({ ...environment, [setting]: undefined }),
+      setting,
+    );
+  }
+});
+
 test("should report invalid setting names without leaking secret values or parser causes", () => {
   const sentinel = "never-disclose-this-fake-secret";
   for (const [setting, value] of [
