@@ -77,6 +77,43 @@ test(
         )
       )[0].id;
       await database.query("INSERT INTO airmech.user_roles VALUES($1,'engineer')", [userId]);
+      await t.test("provider JWT is accepted by Supabase for the owned identity", async () => {
+        const identity = await provider.signIn(email, password);
+        try {
+          const parts = identity.accessToken.split(".");
+          assert.equal(parts.length, 3);
+          const claims = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
+          assert.ok(claims.sub === identityId);
+          assert.ok(claims.email === email);
+          assert.ok(claims.role === "authenticated");
+          assert.ok(claims.iss === `${config.storage.supabaseUrl}/auth/v1`);
+          assert.ok(Number.isFinite(claims.exp) && claims.exp > Date.now() / 1000);
+          // Provider validation proves token acceptance; decoding alone is not verification.
+          const verified = await fetch(`${config.storage.supabaseUrl}/auth/v1/user`, {
+            headers: {
+              apikey: config.storage.anonKey,
+              Authorization: `Bearer ${identity.accessToken}`,
+            },
+            signal: AbortSignal.timeout(8000),
+            redirect: "error",
+          });
+          assert.equal(verified.status, 200);
+          const user = await verified.json();
+          assert.ok(user.id === identityId && user.email === email);
+        } finally {
+          const logout = await fetch(`${config.storage.supabaseUrl}/auth/v1/logout?scope=global`, {
+            method: "POST",
+            headers: {
+              apikey: config.storage.anonKey,
+              Authorization: `Bearer ${identity.accessToken}`,
+            },
+            signal: AbortSignal.timeout(8000),
+            redirect: "error",
+          });
+          await logout.body?.cancel();
+          assert.ok(logout.status === 200 || logout.status === 204);
+        }
+      });
       await t.test(
         "valid credentials produce an HttpOnly opaque application session without provider tokens",
         async () => {
@@ -102,7 +139,17 @@ test(
           assert.equal((await request("/admin/users", undefined, cookie)).status, 403);
           const logout = await request("/auth/logout", {}, cookie);
           assert.equal(logout.status, 204);
+          assert.ok(
+            logout.headers
+              .getSetCookie()
+              .some((value) => value.startsWith("airmech_session=;") && /Max-Age=0/.test(value)),
+          );
           assert.equal((await request("/auth/me", undefined, cookie)).status, 401);
+          const sessions = await database.query(
+            "SELECT count(*)::int AS count FROM airmech.auth_sessions WHERE user_id=$1",
+            [userId],
+          );
+          assert.equal(sessions[0].count, 0);
         },
       );
       await t.test("invalid and disabled credentials have the same safe denial", async () => {

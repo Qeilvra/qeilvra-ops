@@ -1,5 +1,14 @@
 # TASK-013 — Login
 
+## Live verification — 7 October 2026
+
+The explicitly authorized one-user Supabase lifecycle passed again with
+disposable local PostgreSQL. Additional checks prove Supabase accepts the JWT,
+the API maps the engineer role correctly, and logout expires the cookie and
+removes the local session. Provider deletion was followed by a confirmed 404.
+See [the controlled live authentication report](supabase-auth-live.md) for
+commands, exact test counts, cleanup and scope.
+
 ## Reconciliation — 6 October 2026
 
 Current status: **DONE**. Previous tracker state: BLOCKED.
