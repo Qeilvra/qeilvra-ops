@@ -10,6 +10,8 @@ import { AuthService } from "./auth.service.js";
 import { ApplicationAccessGuard } from "./auth.guard.js";
 import { UserAdministrationController } from "../users/user-admin.controller.js";
 import { UserAdministrationService } from "../users/user-admin.service.js";
+import { NotificationController } from "../notifications/notification.controller.js";
+import { NotificationService } from "../notifications/notification.service.js";
 
 @Module({})
 export class AuthModule {
@@ -17,7 +19,7 @@ export class AuthModule {
     return {
       module: AuthModule,
       imports: [InfrastructureModule.register(configuration)],
-      controllers: [AuthController, UserAdministrationController],
+      controllers: [AuthController, UserAdministrationController, NotificationController],
       providers: [
         {
           provide: AuthService,
@@ -29,6 +31,11 @@ export class AuthModule {
           provide: UserAdministrationService,
           inject: [AuthService],
           useFactory: (auth: AuthService) => new UserAdministrationService(auth),
+        },
+        {
+          provide: NotificationService,
+          inject: [AuthService],
+          useFactory: (auth: AuthService) => new NotificationService(auth),
         },
         {
           provide: APP_GUARD,

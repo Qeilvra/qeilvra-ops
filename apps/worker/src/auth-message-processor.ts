@@ -1,6 +1,6 @@
 import type { ServerConfiguration } from "@airmech/config/server";
 import type { DatabaseClient } from "@airmech/database";
-import { RecoveryCipher, SupabaseAuthProvider } from "@airmech/identity";
+import { RecoveryCipher, SupabaseAuthProvider, IdentityProviderError } from "@airmech/identity";
 import type { AuthMessageProcessor } from "@airmech/queue";
 import { randomUUID } from "node:crypto";
 
@@ -75,9 +75,22 @@ export function createAuthMessageProcessor(
       } else {
         if (!("name" in decoded) || typeof decoded.name !== "string" || decoded.name.length > 120)
           throw new Error("Auth invitation is invalid.");
-        const identity = await provider.invite(decoded.email, decoded.name, callback);
-        if (identity.identityId !== message.identity_id)
-          throw new Error("Auth invitation identity does not match.");
+        try {
+          const identity = await provider.invite(decoded.email, decoded.name, callback);
+          if (identity.identityId !== message.identity_id)
+            throw new Error("Auth invitation identity does not match.");
+        } catch (error: unknown) {
+          // A delivered link may confirm the email before password setup succeeds.
+          // Supabase rejects another invite for a confirmed identity; recover the
+          // exact mapped invitation instead, without provisioning another user.
+          if (
+            !(error instanceof IdentityProviderError) ||
+            error.status !== 422 ||
+            !message.identity_id
+          )
+            throw error;
+          await provider.recoverInvitation(decoded.email, callback, message.identity_id);
+        }
       }
       await database.transaction(async (transaction) => {
         const marked = await transaction.query(

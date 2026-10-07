@@ -272,26 +272,49 @@ export class AuthService {
     await this.#recoverySession(identity, "invite", request, response);
   }
 
+  async completeInvitationSession(
+    accessToken: string,
+    request: AuthenticatedRequest,
+    response: ServerResponse,
+  ): Promise<void> {
+    await this.rateLimit(request, "callback");
+    let identity: VerifiedIdentity;
+    try {
+      identity = await this.provider.verifyInvitationSession(accessToken);
+    } catch {
+      throw new BadRequestException();
+    }
+    await this.#recoverySession(identity, "invite", request, response);
+  }
+
   async #recoverySession(
     identity: VerifiedIdentity,
     kind: "recovery" | "invite",
     request: AuthenticatedRequest,
     response: ServerResponse,
   ): Promise<void> {
-    const principal = await new UserRepository(this.databaseClient).findPrincipal(
-      identity.identityId,
-    );
-    if (
-      !principal ||
-      principal.user.status === "disabled" ||
-      (kind === "recovery" && principal.user.status !== "active")
-    )
-      throw new BadRequestException();
     const token = newSessionToken();
     await this.databaseClient.transaction(async (transaction) => {
+      await transaction.query("SELECT id FROM airmech.users WHERE identity_id=$1 FOR UPDATE", [
+        identity.identityId,
+      ]);
+      const principal = await new UserRepository(transaction).findPrincipal(identity.identityId);
+      const sessionKind =
+        kind === "recovery" && principal?.user.status === "invited" ? "invite" : kind;
+      if (
+        !principal ||
+        principal.user.email.toLowerCase() !== identity.email.toLowerCase() ||
+        principal.user.status !== (sessionKind === "invite" ? "invited" : "active")
+      )
+        throw new BadRequestException();
       await transaction.query(
         "INSERT INTO airmech.auth_sessions(token_hash,user_id,kind,provider_access_ciphertext,expires_at) VALUES($1,$2,$3,$4,now()+interval '10 minutes')",
-        [tokenDigest(token), principal.user.id, kind, this.cipher.seal(identity.accessToken)],
+        [
+          tokenDigest(token),
+          principal.user.id,
+          sessionKind,
+          this.cipher.seal(identity.accessToken),
+        ],
       );
       await writeAuthAudit(transaction, "RECOVERY_VERIFIED", request.requestId, principal.user.id);
     });
@@ -317,7 +340,8 @@ export class AuthService {
         kind: "recovery" | "invite";
         provider_access_ciphertext: string;
       }>(
-        `DELETE FROM airmech.auth_sessions s USING airmech.users u WHERE s.token_hash=$1 AND s.user_id=u.id AND u.status<>'disabled'
+        `DELETE FROM airmech.auth_sessions s USING airmech.users u WHERE s.token_hash=$1 AND s.user_id=u.id
+         AND ((s.kind='invite' AND u.status='invited') OR (s.kind='recovery' AND u.status='active'))
          AND s.kind IN ('recovery','invite') AND s.expires_at>now() RETURNING s.user_id,s.kind,s.provider_access_ciphertext`,
         [tokenDigest(token)],
       );
@@ -354,17 +378,37 @@ export class AuthService {
       });
       throw new ServiceUnavailableException();
     }
-    await this.databaseClient.transaction(async (transaction) => {
+    const accepted = await this.databaseClient.transaction(async (transaction) => {
+      const current = await transaction.query<{ status: string }>(
+        "SELECT status FROM airmech.users WHERE id=$1 FOR UPDATE",
+        [session.user_id],
+      );
       await transaction.query("DELETE FROM airmech.auth_sessions WHERE user_id=$1", [
         session.user_id,
       ]);
       await transaction.query("UPDATE airmech.users SET auth_locked_until=NULL WHERE id=$1", [
         session.user_id,
       ]);
+      if (current[0]?.status !== (session.kind === "invite" ? "invited" : "active")) {
+        await writeAuthAudit(
+          transaction,
+          "PASSWORD_RESET_FAILED",
+          request.requestId,
+          session.user_id,
+        );
+        return false;
+      }
       if (session.kind === "invite")
         await transaction.query(
           "UPDATE airmech.users SET status='active',updated_at=now() WHERE id=$1 AND status='invited'",
           [session.user_id],
+        );
+      if (session.kind === "invite")
+        await writeAuthAudit(
+          transaction,
+          "USER_INVITATION_ACCEPTED",
+          request.requestId,
+          session.user_id,
         );
       await writeAuthAudit(
         transaction,
@@ -372,7 +416,9 @@ export class AuthService {
         request.requestId,
         session.user_id,
       );
+      return true;
     });
+    if (!accepted) throw new BadRequestException();
   }
 
   async createInvitationMessage(
@@ -431,7 +477,8 @@ export class AuthService {
     const token = cookieToken(request.headers.cookie, this.sessionCookie);
     if (!token) throw new BadRequestException();
     const rows = await this.databaseClient.query(
-      "SELECT 1 FROM airmech.auth_sessions s JOIN airmech.users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.kind IN ('recovery','invite') AND s.expires_at>now() AND u.status<>'disabled'",
+      `SELECT 1 FROM airmech.auth_sessions s JOIN airmech.users u ON u.id=s.user_id WHERE s.token_hash=$1
+       AND ((s.kind='invite' AND u.status='invited') OR (s.kind='recovery' AND u.status='active')) AND s.expires_at>now()`,
       [tokenDigest(token)],
     );
     if (!rows[0]) throw new BadRequestException();

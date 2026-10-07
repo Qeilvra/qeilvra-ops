@@ -42,6 +42,7 @@ export class UserRepository {
          FILTER (WHERE ur.role_code IS NOT NULL), '[]') AS grants
        FROM airmech.users u
        LEFT JOIN airmech.user_roles ur ON ur.user_id=u.id
+         AND EXISTS (SELECT 1 FROM airmech.roles r WHERE r.code=ur.role_code AND r.active)
        LEFT JOIN airmech.role_permissions rp ON rp.role_code=ur.role_code
        WHERE ${predicate} AND (u.auth_locked_until IS NULL OR u.auth_locked_until<now()) GROUP BY u.id`,
       [value],

@@ -30,6 +30,7 @@ export class UserAdministrationController {
   @HttpCode(202)
   async resend(@Param("id") id: string, @Req() request: AuthenticatedRequest) {
     await this.users.resendInvitation(id, actor(request), request);
+    return { message: "Invitation resend requested." };
   }
 
   @Get("users")
@@ -101,5 +102,19 @@ export class UserAdministrationController {
     @Req() request: AuthenticatedRequest,
   ) {
     await this.users.updateRole(code, body, actor(request), request);
+  }
+
+  @Post("roles/:code/enable")
+  @RequireAccess("admin.roles", "security")
+  @HttpCode(204)
+  async enableRole(@Param("code") code: string, @Req() request: AuthenticatedRequest) {
+    await this.users.roleStatus(code, true, actor(request), request);
+  }
+
+  @Post("roles/:code/disable")
+  @RequireAccess("admin.roles", "security")
+  @HttpCode(204)
+  async disableRole(@Param("code") code: string, @Req() request: AuthenticatedRequest) {
+    await this.users.roleStatus(code, false, actor(request), request);
   }
 }

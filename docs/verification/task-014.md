@@ -1,5 +1,15 @@
 # TASK-014 — Password Reset
 
+## Acceptance closeout — 7 October 2026
+
+Current status: **REVIEW**.
+
+Complete PKCE UI/API/worker recovery, invitation recovery, expiry/invalid/replay/provider-failure denial and concurrent-disable protection pass. Actual delivered-link reset remains unverified; Supabase HTTP 429 blocks delivery to the current authorized inbox.
+
+Implemented changes, migration/security/performance review and exact executed checks are in [the acceptance closeout report](acceptance-closeout.md). Clean pnpm check passed with 83 unit/integration, three startup and 68 browser tests; disposable real SQL/API/worker/UI integration passed all 26 cases. No cloud application migration or deployment was performed.
+
+Earlier dated records below are historical and do not override this assessment.
+
 ## Reconciliation — 6 October 2026
 
 Current status: **REVIEW**. Previous tracker state: BLOCKED.

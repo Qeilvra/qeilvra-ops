@@ -61,7 +61,14 @@ export class UserAdministrationService {
 
   async #protectLastAdmin(transaction: DatabaseTransaction): Promise<void> {
     const rows = await transaction.query<{ count: number }>(
-      "SELECT count(*)::integer AS count FROM airmech.users u JOIN airmech.user_roles ur ON ur.user_id=u.id WHERE ur.role_code='super_admin' AND u.status='active'",
+      `SELECT count(*)::integer AS count FROM airmech.users u
+       JOIN airmech.user_roles ur ON ur.user_id=u.id
+       JOIN airmech.roles r ON r.code=ur.role_code AND r.active
+       WHERE ur.role_code='super_admin' AND u.status='active'
+         AND NOT EXISTS (SELECT 1 FROM unnest($1::text[]) required(permission)
+           WHERE NOT EXISTS (SELECT 1 FROM airmech.role_permissions rp
+             WHERE rp.role_code=r.code AND rp.permission_code=required.permission))`,
+      [ADMIN_REQUIRED_PERMISSIONS],
     );
     if ((rows[0]?.count ?? 0) < 1) throw new ConflictException();
   }
@@ -75,39 +82,39 @@ export class UserAdministrationService {
       !["", "active", "invited", "disabled"].includes(status)
     )
       throw new BadRequestException();
-    const items = await this.auth.databaseClient.query<{
-      id: string;
-      email: string;
-      display_name: string;
-      status: string;
-      employee_code: string | null;
-      job_title: string | null;
-      phone: string | null;
-      roles: string[];
+    const rows = await this.auth.databaseClient.query<{
+      items: unknown[];
       total: number;
     }>(
-      `SELECT u.id,u.email,u.display_name,u.status,u.employee_code,u.job_title,u.phone,
-         ARRAY(SELECT ur.role_code FROM airmech.user_roles ur WHERE ur.user_id=u.id ORDER BY ur.role_code) AS roles,
-         count(*) OVER()::integer AS total FROM airmech.users u
+      `WITH filtered AS NOT MATERIALIZED (
+       SELECT u.id,u.email,u.display_name,u.status,u.employee_code,u.job_title,u.phone,u.created_at
+       FROM airmech.users u
        WHERE ($1='' OR lower(u.email) LIKE lower($1)||'%' OR lower(u.display_name) LIKE lower($1)||'%')
          AND ($3='' OR u.status=$3)
-       ORDER BY u.created_at DESC,u.id LIMIT 25 OFFSET $2`,
+       ), page AS (
+       SELECT u.id,u.email,u.display_name,u.status,u.employee_code,u.job_title,u.phone,
+         ARRAY(SELECT ur.role_code FROM airmech.user_roles ur WHERE ur.user_id=u.id ORDER BY ur.role_code) AS roles,
+         u.created_at FROM filtered u ORDER BY u.created_at DESC,u.id LIMIT 25 OFFSET $2
+       ) SELECT (SELECT count(*)::integer FROM filtered) AS total,
+         COALESCE(jsonb_agg(to_jsonb(page)-'created_at' ORDER BY page.created_at DESC,page.id)
+           FILTER (WHERE page.id IS NOT NULL),'[]') AS items FROM page`,
       [
         search.replaceAll("\\", "\\\\").replaceAll("%", "\\%").replaceAll("_", "\\_"),
         (page - 1) * 25,
         status,
       ],
     );
-    return { items, page, pageSize: 25, total: items[0]?.total ?? 0 };
+    return { items: rows[0]?.items ?? [], page, pageSize: 25, total: rows[0]?.total ?? 0 };
   }
 
   async roles() {
     const items = await this.auth.databaseClient.query<{
       code: string;
       name: string;
+      active: boolean;
       permissions: string[];
     }>(
-      "SELECT r.code,r.name,ARRAY(SELECT rp.permission_code FROM airmech.role_permissions rp WHERE rp.role_code=r.code ORDER BY rp.permission_code) AS permissions FROM airmech.roles r ORDER BY r.code",
+      "SELECT r.code,r.name,r.active,ARRAY(SELECT rp.permission_code FROM airmech.role_permissions rp WHERE rp.role_code=r.code ORDER BY rp.permission_code) AS permissions FROM airmech.roles r ORDER BY r.code",
     );
     const permissions = await this.auth.databaseClient.query<{ code: string; description: string }>(
       "SELECT code,description FROM airmech.permissions ORDER BY code",
@@ -164,8 +171,10 @@ export class UserAdministrationService {
     await this.auth.databaseClient.transaction(async (transaction) => {
       await this.#actor(transaction, actor, enabled ? "user.update" : "user.disable");
       const changed = await transaction.query<{ id: string }>(
-        "UPDATE airmech.users SET status=$2,updated_at=now() WHERE id=$1 RETURNING id",
-        [id, enabled ? "active" : "disabled"],
+        enabled
+          ? "UPDATE airmech.users SET status=COALESCE(disabled_from_status,'active'),disabled_from_status=NULL,updated_at=now() WHERE id=$1 AND status='disabled' RETURNING id"
+          : "UPDATE airmech.users SET disabled_from_status=status,status='disabled',updated_at=now() WHERE id=$1 AND status IN ('active','invited') RETURNING id",
+        [id],
       );
       if (!changed[0]) throw new ConflictException();
       await this.#protectLastAdmin(transaction);
@@ -192,6 +201,7 @@ export class UserAdministrationService {
       throw new BadRequestException();
     await this.auth.databaseClient.transaction(async (transaction) => {
       const current = await this.#actor(transaction, actor, "admin.users");
+      await this.#activeRoles(transaction, roles);
       const grants = await transaction.query<{ permission_code: string }>(
         "SELECT DISTINCT permission_code FROM airmech.role_permissions WHERE role_code=ANY($1::text[])",
         [roles],
@@ -257,6 +267,7 @@ export class UserAdministrationService {
         "INSERT INTO airmech.role_permissions(role_code,permission_code) SELECT $1,unnest($2::text[])",
         [code, permissions],
       );
+      await this.#protectLastAdmin(transaction);
       await transaction.query(
         "DELETE FROM airmech.auth_sessions WHERE user_id IN (SELECT user_id FROM airmech.user_roles WHERE role_code=$1)",
         [code],
@@ -272,6 +283,50 @@ export class UserAdministrationService {
     });
   }
 
+  async roleStatus(
+    code: string,
+    active: boolean,
+    actor: AccessPrincipal,
+    request: AuthenticatedRequest,
+  ): Promise<void> {
+    if (!Object.hasOwn(ROLE_PERMISSION_BASELINE, code)) throw new NotFoundException();
+    await this.auth.databaseClient.transaction(async (transaction) => {
+      await this.#actor(transaction, actor, "admin.roles");
+      const previous = await transaction.query<{ active: boolean }>(
+        "SELECT active FROM airmech.roles WHERE code=$1 FOR UPDATE",
+        [code],
+      );
+      if (!previous[0]) throw new NotFoundException();
+      if (previous[0].active === active) return;
+      await transaction.query("UPDATE airmech.roles SET active=$2 WHERE code=$1", [code, active]);
+      await this.#protectLastAdmin(transaction);
+      await transaction.query(
+        "DELETE FROM airmech.auth_sessions WHERE user_id IN (SELECT user_id FROM airmech.user_roles WHERE role_code=$1)",
+        [code],
+      );
+      await writeAuthAudit(
+        transaction,
+        active ? "ROLE_ENABLED" : "ROLE_DISABLED",
+        request.requestId,
+        actor.user.id,
+        null,
+        {
+          roleCode: code,
+          before: [previous[0].active ? "active" : "disabled"],
+          after: [active ? "active" : "disabled"],
+        },
+      );
+    });
+  }
+
+  async #activeRoles(transaction: DatabaseTransaction, roles: string[]): Promise<void> {
+    const rows = await transaction.query<{ code: string }>(
+      "SELECT code FROM airmech.roles WHERE code=ANY($1::text[]) AND active",
+      [roles],
+    );
+    if (rows.length !== roles.length) throw new ConflictException();
+  }
+
   async invite(
     body: unknown,
     actor: AccessPrincipal,
@@ -285,6 +340,7 @@ export class UserAdministrationService {
       throw new BadRequestException();
     await this.auth.databaseClient.transaction(async (transaction) => {
       const current = await this.#actor(transaction, actor, "user.create");
+      await this.#activeRoles(transaction, roles);
       const grants = await transaction.query<{ permission_code: string }>(
         "SELECT DISTINCT permission_code FROM airmech.role_permissions WHERE role_code=ANY($1::text[])",
         [roles],
@@ -309,36 +365,55 @@ export class UserAdministrationService {
       );
       throw new ServiceUnavailableException();
     }
-    const messageId = await this.auth.databaseClient.transaction(async (transaction) => {
-      const current = await this.#actor(transaction, actor, "user.create");
-      const grants = await transaction.query<{ permission_code: string }>(
-        "SELECT DISTINCT permission_code FROM airmech.role_permissions WHERE role_code=ANY($1::text[])",
-        [roles],
-      );
-      if (grants.some((grant) => !current.permissions.includes(grant.permission_code)))
-        throw new ForbiddenException();
-      const rows = await transaction.query<{ id: string }>(
-        "INSERT INTO airmech.users(identity_id,email,display_name,status) VALUES($1,$2,$3,'invited') RETURNING id",
-        [identityId, email, name],
-      );
-      const id = rows[0]?.id;
-      if (!id) throw new ConflictException();
-      await transaction.query(
-        "INSERT INTO airmech.user_roles(user_id,role_code) SELECT $1,unnest($2::text[])",
-        [id, roles],
-      );
-      await writeAuthAudit(transaction, "USER_CREATED", request.requestId, actor.user.id, id, {
-        after: roles,
+    let messageId: string;
+    try {
+      messageId = await this.auth.databaseClient.transaction(async (transaction) => {
+        const current = await this.#actor(transaction, actor, "user.create");
+        await this.#activeRoles(transaction, roles);
+        const grants = await transaction.query<{ permission_code: string }>(
+          "SELECT DISTINCT permission_code FROM airmech.role_permissions WHERE role_code=ANY($1::text[])",
+          [roles],
+        );
+        if (grants.some((grant) => !current.permissions.includes(grant.permission_code)))
+          throw new ForbiddenException();
+        const rows = await transaction.query<{ id: string }>(
+          "INSERT INTO airmech.users(identity_id,email,display_name,status) VALUES($1,$2,$3,'invited') RETURNING id",
+          [identityId, email, name],
+        );
+        const id = rows[0]?.id;
+        if (!id) throw new ConflictException();
+        await transaction.query(
+          "INSERT INTO airmech.user_roles(user_id,role_code) SELECT $1,unnest($2::text[])",
+          [id, roles],
+        );
+        await writeAuthAudit(transaction, "USER_CREATED", request.requestId, actor.user.id, id, {
+          after: roles,
+        });
+        return this.auth.createInvitationMessage(
+          transaction,
+          id,
+          email,
+          name,
+          actor.user.id,
+          request.requestId,
+        );
       });
-      return this.auth.createInvitationMessage(
-        transaction,
-        id,
-        email,
-        name,
-        actor.user.id,
+    } catch (error: unknown) {
+      let cleanupFailed = false;
+      try {
+        await this.auth.provider.discardUncommittedInvitation(identityId, email);
+      } catch {
+        cleanupFailed = true;
+      }
+      await writeAuthAudit(
+        this.auth.databaseClient,
+        cleanupFailed ? "USER_INVITE_CLEANUP_FAILED" : "USER_INVITE_PROFILE_FAILED",
         request.requestId,
+        actor.user.id,
       );
-    });
+      if (cleanupFailed) throw new ServiceUnavailableException();
+      throw error;
+    }
     await this.auth.enqueueMessage(messageId);
   }
 
@@ -355,6 +430,23 @@ export class UserAdministrationService {
         [id],
       );
       if (!rows[0]) throw new ConflictException();
+      const pending = await transaction.query<{ lease_until: Date | null }>(
+        "SELECT lease_until FROM airmech.auth_messages WHERE user_id=$1 AND kind='invite' AND state='pending' FOR UPDATE",
+        [id],
+      );
+      if (
+        pending.some((message) => message.lease_until && message.lease_until.getTime() > Date.now())
+      )
+        throw new ConflictException();
+      await transaction.query(
+        "DELETE FROM airmech.auth_sessions WHERE user_id=$1 AND kind='invite'",
+        [id],
+      );
+      await transaction.query(
+        "UPDATE airmech.auth_messages SET state='cancelled' WHERE user_id=$1 AND kind='invite' AND state IN ('pending','failed')",
+        [id],
+      );
+      await writeAuthAudit(transaction, "USER_INVITE_RESENT", request.requestId, actor.user.id, id);
       return this.auth.createInvitationMessage(
         transaction,
         id,

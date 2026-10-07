@@ -1,5 +1,15 @@
 # TASK-011 — Roles
 
+## Acceptance closeout — 7 October 2026
+
+Current status: **DONE**.
+
+Active roles are enforced in current server principals. Super Admin-only lifecycle/grant changes are locked, audited and revoke sessions; final effective administrator protection and concurrency/security checks pass.
+
+Implemented changes, migration/security/performance review and exact executed checks are in [the acceptance closeout report](acceptance-closeout.md). Clean pnpm check passed with 83 unit/integration, three startup and 68 browser tests; disposable real SQL/API/worker/UI integration passed all 26 cases. No cloud application migration or deployment was performed.
+
+Earlier dated records below are historical and do not override this assessment.
+
 Current reconciliation status: **REVIEW**, 6 October 2026. Role activation and
 deactivation are absent. The following model-only acceptance record is historical.
 

@@ -61,7 +61,15 @@ export function AuthForm({ mode }: { mode: "login" | "request" | "password" }) {
         setSent(true);
       }
     } catch (failure: unknown) {
-      setError(safeMessage(failure));
+      if (mode === "password") {
+        form.reset();
+        setReady(false);
+        setError(
+          failure instanceof ApiRequestError && failure.status === 400
+            ? "This reset link is invalid or has expired. Request a new link."
+            : "Your password could not be saved. Request a new link and try again.",
+        );
+      } else setError(safeMessage(failure));
     } finally {
       setBusy(false);
     }

@@ -5,7 +5,7 @@
 
 This file defines the implementation order, task status, dependencies, and acceptance checks for the complete project.
 
-Reconciled 6 October 2026 against source, current automated/live checks, historical evidence and approved decisions. All 133 formal tasks have explicit states; there is no TASK-009. See [the complete audit and per-task gaps](docs/verification/full-reconciliation.md). A BACKLOG state identifies unstarted work; it does not claim a configurable production value prevents all implementation.
+Latest targeted acceptance closeout: 7 October 2026; see [the acceptance report](docs/verification/acceptance-closeout.md). Earlier full audit: reconciled 6 October 2026 against source, current automated/live checks, historical evidence and approved decisions. All 133 formal tasks have explicit states; there is no TASK-009. See [the complete audit and per-task gaps](docs/verification/full-reconciliation.md). A BACKLOG state identifies unstarted work; it does not claim a configurable production value prevents all implementation.
 
 ---
 
@@ -313,9 +313,9 @@ Create:
 
 ## TASK-011 — Roles
 
-Status: REVIEW
+Status: DONE
 
-Reconciled 6 October 2026: Eight stable approved lower-case role codes, names, grants and replay are verified. Role-level active/inactive state required by this audit is absent; add and verify lifecycle enforcement before DONE. Historical model-only DONE is narrower.
+Acceptance closeout 7 October 2026: Active roles are enforced in current server principals. Super Admin-only lifecycle/grant changes are locked, audited and revoke sessions; final effective administrator protection and concurrency/security checks pass.
 Evidence and remaining acceptance: [task-011 verification](docs/verification/task-011.md).
 
 Create:
@@ -384,7 +384,7 @@ Implement:
 
 Status: REVIEW
 
-Reconciled 6 October 2026: PKCE recovery, generic request, replay/session revocation and reset UI pass controlled fixtures. Actual recovery email, approved provider redirect/template and delivered-link password reset remain unverified.
+Acceptance closeout 7 October 2026: Complete PKCE UI/API/worker recovery, invitation recovery, expiry/invalid/replay/provider-failure denial and concurrent-disable protection pass. Actual delivered-link reset remains unverified; Supabase HTTP 429 blocks delivery to the current authorized inbox.
 Evidence and remaining acceptance: [task-014 verification](docs/verification/task-014.md).
 
 Include:
@@ -399,7 +399,7 @@ Include:
 
 Status: REVIEW
 
-Reconciled 6 October 2026: Real SQL/API list/search/status filter, profile edits, enable/disable, role assignment/removal, last-admin/concurrency protections and fixture invites pass. Real invite delivery/setup remains unverified; empty out-of-range pages currently lose total count; resend invitation lacks a UI action.
+Acceptance closeout 7 October 2026: Invitation/resend/confirmed-identity recovery, correct enable/disable/setup transitions, provisioning rollback, security audit and accurate bounded pagination pass. Actual invite/setup/resend remains unverified; Supabase HTTP 429 blocks delivery to the current authorized inbox.
 Evidence and remaining acceptance: [task-015 verification](docs/verification/task-015.md).
 
 Admin can:
@@ -447,9 +447,9 @@ ROLE_CHANGED
 
 ## TASK-020 — Desktop Layout
 
-Status: IN_PROGRESS
+Status: DONE
 
-Reconciled 6 October 2026: Sidebar/header/workspace/account/sign-out/loading/retry exist. Add actual user menu, search and notification entries with integrated navigation; no fabricated domain links.
+Acceptance closeout 7 October 2026: Account menu/profile/recovery/sign-out, permission-aware page search, lazy recipient-scoped notification drawer and desktop/mobile navigation pass all four viewport checks. Business-wide record search remains a later task.
 Evidence and remaining acceptance: [task-020 verification](docs/verification/task-020.md).
 
 Build:

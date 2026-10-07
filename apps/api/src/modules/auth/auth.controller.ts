@@ -78,6 +78,22 @@ export class AuthController {
     await this.auth.completeInvitation(inputText(fields, "tokenHash", 256), request, response);
   }
 
+  @Post("invitation/session")
+  @PublicRoute()
+  @HttpCode(204)
+  async invitationSession(
+    @Body() body: unknown,
+    @Req() request: AuthenticatedRequest,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ) {
+    const fields = requireFields(body, ["accessToken"]);
+    await this.auth.completeInvitationSession(
+      inputText(fields, "accessToken", 16_384),
+      request,
+      response,
+    );
+  }
+
   @Post("password-reset/complete")
   @PublicRoute()
   @HttpCode(204)

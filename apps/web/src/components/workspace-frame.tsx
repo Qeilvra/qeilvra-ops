@@ -7,6 +7,7 @@ import { hasPermission, type AccessPrincipal } from "@airmech/contracts";
 import { BrandSignature, Button, ErrorState, Skeleton } from "@airmech/ui";
 import { apiRequest, ApiRequestError, safeMessage } from "@/lib/api/client";
 import { readPrincipal } from "@/lib/auth/principal";
+import { WorkspaceTools } from "@/components/workspace-tools";
 
 export function WorkspaceFrame({
   children,
@@ -37,6 +38,7 @@ export function WorkspaceFrame({
       router.replace("/login");
     } catch (failure: unknown) {
       setError(safeMessage(failure));
+      throw failure;
     } finally {
       setLeaving(false);
     }
@@ -55,15 +57,7 @@ export function WorkspaceFrame({
         <div className="workspace-account">
           <span>{principal?.user.displayName}</span>
           {principal && (
-            <Button
-              variant="secondary"
-              busy={leaving}
-              onClick={() => {
-                logout().catch(() => setError("Sign out could not be completed."));
-              }}
-            >
-              Sign out
-            </Button>
+            <WorkspaceTools principal={principal} leaving={leaving} onLogout={logout} />
           )}
         </div>
       </header>

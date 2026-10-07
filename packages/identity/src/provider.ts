@@ -117,6 +117,18 @@ export class SupabaseAuthProvider {
     });
   }
 
+  async recoverInvitation(email: string, callback: string, identityId: string): Promise<void> {
+    const user = await this.#request(`/admin/users/${identityId}`, undefined, { admin: true });
+    if (
+      user.id !== identityId ||
+      typeof user.email !== "string" ||
+      user.email.toLowerCase() !== email.toLowerCase() ||
+      typeof user.email_confirmed_at !== "string"
+    )
+      throw new IdentityProviderError("INVALID_CREDENTIALS");
+    await this.#request(`/recover?redirect_to=${encodeURIComponent(callback)}`, { email });
+  }
+
   async exchangeRecovery(code: string, verifier: string): Promise<VerifiedIdentity> {
     return this.#identity(
       await this.#request("/token?grant_type=pkce", { auth_code: code, code_verifier: verifier }),
@@ -127,6 +139,19 @@ export class SupabaseAuthProvider {
     return this.#identity(
       await this.#request("/verify", { type: "invite", token_hash: tokenHash }),
     );
+  }
+
+  /** Default invitation emails verify at Supabase before redirecting a session fragment. */
+  async verifyInvitationSession(accessToken: string): Promise<VerifiedIdentity> {
+    if (!accessToken || accessToken.length > 16_384)
+      throw new IdentityProviderError("INVALID_CREDENTIALS");
+    const user = await this.#request("/user", undefined, { token: accessToken });
+    if (
+      typeof user.email_confirmed_at !== "string" ||
+      !Number.isFinite(Date.parse(user.email_confirmed_at))
+    )
+      throw new IdentityProviderError("INVALID_CREDENTIALS");
+    return this.#identity({ user, access_token: accessToken });
   }
 
   async updatePassword(accessToken: string, password: string): Promise<void> {
@@ -147,12 +172,35 @@ export class SupabaseAuthProvider {
   async createInvitationIdentity(email: string, name: string): Promise<{ identityId: string }> {
     const user = await this.#request(
       "/admin/users",
-      { email, email_confirm: false, user_metadata: { display_name: name } },
+      {
+        email,
+        email_confirm: false,
+        user_metadata: { display_name: name, purpose: "airmech-user-invitation" },
+      },
       { admin: true },
     );
     if (typeof user.id !== "string" || !/^[0-9a-f-]{36}$/i.test(user.id))
       throw new IdentityProviderError("PROVIDER_UNAVAILABLE");
     return { identityId: user.id };
+  }
+
+  /** Compensate only a newly provisioned, unconfirmed invitation after a local rollback. */
+  async discardUncommittedInvitation(identityId: string, email: string): Promise<void> {
+    const user = await this.#request(`/admin/users/${identityId}`, undefined, { admin: true });
+    const metadata = record(user.user_metadata);
+    if (
+      user.id !== identityId ||
+      typeof user.email !== "string" ||
+      user.email.toLowerCase() !== email.toLowerCase() ||
+      user.email_confirmed_at ||
+      metadata.purpose !== "airmech-user-invitation"
+    )
+      throw new IdentityProviderError("INVALID_CREDENTIALS");
+    await this.#request(
+      `/admin/users/${identityId}`,
+      { should_soft_delete: false },
+      { admin: true, method: "DELETE" },
+    );
   }
 
   /** Explicit verification/bootstrap tooling only; passwords never enter application persistence. */

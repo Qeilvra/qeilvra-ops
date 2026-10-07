@@ -25,6 +25,23 @@ async function withProvider(operation) {
         return;
       }
       response.setHeader("Content-Type", "application/json");
+      if (request.url === "/auth/v1/user" && request.method === "GET") {
+        const token = request.headers.authorization;
+        if (!["Bearer fake-invite-session", "Bearer fake-unconfirmed-session"].includes(token)) {
+          response.writeHead(401);
+          response.end("{}");
+          return;
+        }
+        response.end(
+          JSON.stringify({
+            id: identityId,
+            email: "test@example.invalid",
+            email_confirmed_at:
+              token === "Bearer fake-invite-session" ? "2026-10-07T12:00:00Z" : null,
+          }),
+        );
+        return;
+      }
       if (request.url.startsWith("/auth/v1/recover") || request.url === "/auth/v1/user")
         response.end("{}");
       else
@@ -70,6 +87,17 @@ test("native provider adapter uses documented password/PKCE/recovery operations 
     );
     assert.equal(calls[2].body.auth_code, "fake-code");
     assert.equal(calls[3].method, "PUT");
+  }));
+
+test("default invitation sessions require provider validation and a confirmed email", () =>
+  withProvider(async (provider, calls, identityId) => {
+    assert.equal(
+      (await provider.verifyInvitationSession("fake-invite-session")).identityId,
+      identityId,
+    );
+    for (const token of ["fake-unconfirmed-session", "expired-session", "", "x".repeat(16_385)])
+      await assert.rejects(provider.verifyInvitationSession(token));
+    assert.ok(calls.every((call) => call.method === "GET" && call.key === "fake-public-key"));
   }));
 
 test("provider errors/oversized responses are bounded and redact submitted passwords and raw provider text", () =>

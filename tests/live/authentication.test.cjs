@@ -1,12 +1,13 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { randomUUID } = require("node:crypto");
+const { randomUUID, createHash } = require("node:crypto");
 const { setTimeout: delay } = require("node:timers/promises");
 const { loadEnvironment, readServerConfiguration } = require("@airmech/config/server");
 const { DatabaseClient, applyMigrations, readMigrations } = require("@airmech/database");
 const { startAuthMessageWorker } = require("@airmech/queue");
 const { assertDisposableDatabase } = require("../helpers/disposable-database.cjs");
 const { startAuthProviderFixture } = require("../helpers/auth-provider-fixture.cjs");
+const { startLocalWeb } = require("../helpers/local-web.cjs");
 
 async function until(operation) {
   const deadline = Date.now() + 15000;
@@ -43,7 +44,8 @@ test(
     );
     await applyMigrations(base.database, await readMigrations());
     const fixture = await startAuthProviderFixture();
-    const appUrl = "http://localhost:3000";
+    const web = await startLocalWeb();
+    const appUrl = web.url;
     const configuration = readServerConfiguration("api", {
       ...environment,
       AUTH_ENABLED: "true",
@@ -298,6 +300,139 @@ test(
         },
       );
       await t.test(
+        "role lifecycle filters effective grants, revokes sessions and protects the admin path",
+        async () => {
+          const roleUser = await seed("engineer");
+          const roleCookie = await login(roleUser);
+          assert.equal(
+            (
+              await request("/admin/roles/engineer/disable", {
+                method: "POST",
+                cookie: managerCookie,
+              })
+            ).status,
+            403,
+          );
+          assert.equal(
+            (
+              await request("/admin/roles/super_admin/disable", {
+                method: "POST",
+                cookie: adminCookie,
+              })
+            ).status,
+            409,
+          );
+          const multi = await seed("management");
+          await database.query("INSERT INTO airmech.user_roles VALUES($1,'engineer')", [
+            multi.userId,
+          ]);
+          const multiCookie = await login(multi);
+          assert.equal(
+            (
+              await request("/admin/roles/engineer/disable", {
+                method: "POST",
+                cookie: adminCookie,
+              })
+            ).status,
+            204,
+          );
+          assert.equal((await request("/auth/me", { cookie: roleCookie })).status, 401);
+          assert.equal((await request("/auth/me", { cookie: multiCookie })).status, 401);
+          const denied = await request("/auth/login", {
+            method: "POST",
+            body: { email: roleUser.email, password: roleUser.password },
+          });
+          assert.equal(denied.status, 200);
+          const noGrants = await denied.json();
+          assert.deepEqual(noGrants.roles, []);
+          assert.deepEqual(noGrants.permissions, []);
+          assert.deepEqual(noGrants.rolePermissions, {});
+          assert.equal((await request("/auth/me", { cookie: responseCookie(denied) })).status, 403);
+          const current = await request("/auth/login", {
+            method: "POST",
+            body: { email: multi.email, password: multi.password },
+          });
+          assert.deepEqual((await current.json()).roles, ["management"]);
+          assert.equal(
+            (
+              await request(`/admin/users/${multi.userId}/roles`, {
+                method: "POST",
+                cookie: adminCookie,
+                body: { roles: ["engineer"] },
+              })
+            ).status,
+            409,
+          );
+          assert.equal(
+            (await request("/admin/roles/engineer/enable", { method: "POST", cookie: adminCookie }))
+              .status,
+            204,
+          );
+          assert.equal((await request("/auth/me", { cookie: await login(roleUser) })).status, 200);
+          const events = await database.query(
+            "SELECT event,details FROM airmech.audit_events WHERE event IN ('ROLE_DISABLED','ROLE_ENABLED')",
+          );
+          assert.equal(events.filter((row) => row.details.roleCode === "engineer").length, 2);
+          assert.deepEqual(events.find((row) => row.event === "ROLE_DISABLED").details.after, [
+            "disabled",
+          ]);
+          const firstPage = await (await request("/admin/users", { cookie: adminCookie })).json();
+          const emptyPage = await (
+            await request("/admin/users?page=1000", { cookie: adminCookie })
+          ).json();
+          assert.deepEqual(emptyPage.items, []);
+          assert.equal(emptyPage.total, firstPage.total);
+        },
+      );
+      await t.test(
+        "notification reads and mutations are bounded to the current recipient",
+        async () => {
+          const recipient = await seed("engineer");
+          const notificationCookie = await login(recipient);
+          const own = await database.query(
+            "INSERT INTO airmech.notifications(recipient_id,channel,title,message) SELECT $1,'in_app','Operational notice','Only the recipient can read this' FROM generate_series(1,26) RETURNING id",
+            [recipient.userId],
+          );
+          const other = await database.query(
+            "INSERT INTO airmech.notifications(recipient_id,channel,title,message) VALUES($1,'in_app','Private management notice','Do not disclose') RETURNING id",
+            [manager.userId],
+          );
+          const first = await (
+            await request("/notifications", { cookie: notificationCookie })
+          ).json();
+          assert.equal(first.items.length, 25);
+          assert.equal(first.hasMore, true);
+          assert.ok(first.items.every((item) => item.title === "Operational notice"));
+          assert.equal(
+            (
+              await request(`/notifications/${other[0].id}/read`, {
+                method: "POST",
+                cookie: notificationCookie,
+              })
+            ).status,
+            404,
+          );
+          assert.equal(
+            (
+              await request(`/notifications/${own[0].id}/read`, {
+                method: "POST",
+                cookie: notificationCookie,
+              })
+            ).status,
+            204,
+          );
+          assert.equal(
+            (await request("/notifications?page=0", { cookie: notificationCookie })).status,
+            400,
+          );
+          const second = await (
+            await request("/notifications?page=2", { cookie: notificationCookie })
+          ).json();
+          assert.equal(second.items.length, 1);
+          assert.equal(second.hasMore, false);
+        },
+      );
+      await t.test(
         "role and disable changes revoke existing sessions, persist current grants and append audit",
         async () => {
           assert.equal(
@@ -463,6 +598,188 @@ test(
         },
       );
       await t.test(
+        "expired and invalid recovery states, expired sessions and provider failures deny safely",
+        async () => {
+          async function recovery() {
+            const user = await seed("engineer");
+            const response = await request("/auth/password-reset/request", {
+              method: "POST",
+              body: { email: user.email },
+            });
+            assert.equal(response.status, 202);
+            await until(() =>
+              [...fixture.recoveries.values()].some((item) => item.user.id === user.id),
+            );
+            const [code, item] = [...fixture.recoveries.entries()].find(
+              ([, value]) => value.user.id === user.id,
+            );
+            return { user, code, item, cookie: responseCookie(response, "airmech_recovery") };
+          }
+          const expired = await recovery();
+          const stateHash = createHash("sha256").update(expired.cookie.split("=")[1]).digest("hex");
+          await database.query(
+            "UPDATE airmech.auth_recovery_requests SET expires_at=now()-interval '1 second' WHERE state_hash=$1",
+            [stateHash],
+          );
+          assert.equal(
+            (
+              await request("/auth/recovery/complete", {
+                method: "POST",
+                cookie: expired.cookie,
+                body: { code: expired.code },
+              })
+            ).status,
+            400,
+          );
+          const invalid = await recovery();
+          assert.equal(
+            (
+              await request("/auth/recovery/complete", {
+                method: "POST",
+                cookie: invalid.cookie,
+                body: { code: randomUUID() },
+              })
+            ).status,
+            400,
+          );
+          const providerExpired = await recovery();
+          providerExpired.item.expiresAt = Date.now() - 1;
+          assert.equal(
+            (
+              await request("/auth/recovery/complete", {
+                method: "POST",
+                cookie: providerExpired.cookie,
+                body: { code: providerExpired.code },
+              })
+            ).status,
+            400,
+          );
+          const sessionExpired = await recovery();
+          const verified = await request("/auth/recovery/complete", {
+            method: "POST",
+            cookie: sessionExpired.cookie,
+            body: { code: sessionExpired.code },
+          });
+          assert.equal(verified.status, 204);
+          const passwordCookie = responseCookie(verified);
+          await database.query(
+            "UPDATE airmech.auth_sessions SET created_at=now()-interval '1 hour',expires_at=now()-interval '1 second' WHERE user_id=$1",
+            [sessionExpired.user.userId],
+          );
+          assert.equal(
+            (await request("/auth/recovery/status", { cookie: passwordCookie })).status,
+            400,
+          );
+          assert.equal(
+            (
+              await request("/auth/password-reset/complete", {
+                method: "POST",
+                cookie: passwordCookie,
+                body: { password: "fixture-expired-password" },
+              })
+            ).status,
+            400,
+          );
+          const failed = await recovery();
+          const oldLogin = await login(failed.user);
+          const ready = await request("/auth/recovery/complete", {
+            method: "POST",
+            cookie: failed.cookie,
+            body: { code: failed.code },
+          });
+          assert.equal(ready.status, 204);
+          const failedCookie = responseCookie(ready);
+          fixture.state.passwordFailures = 1;
+          const update = await request("/auth/password-reset/complete", {
+            method: "POST",
+            cookie: failedCookie,
+            body: { password: "fixture-failed-password" },
+          });
+          assert.equal(update.status, 503);
+          assert.equal((await update.text()).includes("fixture-failed-password"), false);
+          assert.equal((await request("/auth/me", { cookie: oldLogin })).status, 401);
+          assert.equal(
+            (await request("/auth/recovery/status", { cookie: failedCookie })).status,
+            400,
+          );
+          assert.equal(
+            (
+              await request("/auth/password-reset/complete", {
+                method: "POST",
+                cookie: failedCookie,
+                body: { password: "fixture-replayed-password" },
+              })
+            ).status,
+            400,
+          );
+          assert.equal(
+            (
+              await database.query(
+                "SELECT count(*)::integer AS count FROM airmech.auth_sessions WHERE user_id=$1",
+                [failed.user.userId],
+              )
+            )[0].count,
+            0,
+          );
+        },
+      );
+      await t.test(
+        "a concurrent disable during provider password update stays disabled",
+        async () => {
+          const user = await seed("engineer");
+          const response = await request("/auth/password-reset/request", {
+            method: "POST",
+            body: { email: user.email },
+          });
+          assert.equal(response.status, 202);
+          await until(() =>
+            [...fixture.recoveries.values()].some((item) => item.user.id === user.id),
+          );
+          const [code] = [...fixture.recoveries.entries()].find(
+            ([, item]) => item.user.id === user.id,
+          );
+          const verified = await request("/auth/recovery/complete", {
+            method: "POST",
+            cookie: responseCookie(response, "airmech_recovery"),
+            body: { code },
+          });
+          assert.equal(verified.status, 204);
+          fixture.holdPassword();
+          const change = request("/auth/password-reset/complete", {
+            method: "POST",
+            cookie: responseCookie(verified),
+            body: { password: "fixture-racing-reset-password" },
+          });
+          await until(() => fixture.state.passwordStarted);
+          assert.equal(
+            (
+              await request(`/admin/users/${user.userId}/disable`, {
+                method: "POST",
+                cookie: adminCookie,
+              })
+            ).status,
+            204,
+          );
+          fixture.releasePassword();
+          fixture.state.pausePassword = false;
+          assert.equal((await change).status, 400);
+          assert.equal(
+            (await database.query("SELECT status FROM airmech.users WHERE id=$1", [user.userId]))[0]
+              .status,
+            "disabled",
+          );
+          assert.equal(
+            (
+              await database.query(
+                "SELECT count(*)::integer AS count FROM airmech.auth_sessions WHERE user_id=$1",
+                [user.userId],
+              )
+            )[0].count,
+            0,
+          );
+        },
+      );
+      await t.test(
         "invited accounts require verified single-use password setup before login",
         async () => {
           const email = `${randomUUID()}@example.invalid`;
@@ -494,9 +811,81 @@ test(
           assert.equal((await request("/auth/me", { cookie })).status, 401);
           assert.equal(
             (
+              await request(`/admin/users/${rows[0].id}/enable`, {
+                method: "POST",
+                cookie: adminCookie,
+              })
+            ).status,
+            409,
+          );
+          assert.equal(
+            (
+              await request(`/admin/users/${rows[0].id}/disable`, {
+                method: "POST",
+                cookie: adminCookie,
+              })
+            ).status,
+            204,
+          );
+          assert.equal(
+            (
+              await request(`/admin/users/${rows[0].id}/enable`, {
+                method: "POST",
+                cookie: adminCookie,
+              })
+            ).status,
+            204,
+          );
+          assert.equal(
+            (await database.query("SELECT status FROM airmech.users WHERE id=$1", [rows[0].id]))[0]
+              .status,
+            "invited",
+          );
+          assert.equal(
+            (
+              await request(`/admin/users/${rows[0].id}/invite`, {
+                method: "POST",
+                cookie: managerCookie,
+              })
+            ).status,
+            403,
+          );
+          assert.equal(
+            (
+              await request(`/admin/users/${rows[0].id}/invite`, {
+                method: "POST",
+                cookie: adminCookie,
+              })
+            ).status,
+            202,
+          );
+          assert.equal((await request("/auth/recovery/status", { cookie })).status, 400);
+          await until(() =>
+            [...fixture.recoveries.values()].some(
+              (value) => value.user.id === identity.id && !value.challenge,
+            ),
+          );
+          const [setupCode] = [...fixture.recoveries.entries()].find(
+            ([, value]) => value.user.id === identity.id && !value.challenge,
+          );
+          const recovered = await fetch(`${fixture.url}/auth/v1/verify`, {
+            method: "POST",
+            headers: { apikey: "fixture-public-key", "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "recovery", token_hash: setupCode }),
+          });
+          assert.equal(recovered.status, 200);
+          const setupSession = await recovered.json();
+          const newVerified = await request("/auth/invitation/session", {
+            method: "POST",
+            body: { accessToken: setupSession.access_token },
+          });
+          assert.equal(newVerified.status, 204);
+          const newCookie = responseCookie(newVerified);
+          assert.equal(
+            (
               await request("/auth/password-reset/complete", {
                 method: "POST",
-                cookie,
+                cookie: newCookie,
                 body: { password: "fixture-invite-password-123" },
               })
             ).status,
@@ -519,6 +908,234 @@ test(
               })
             ).status,
             200,
+          );
+          assert.equal(
+            (
+              await request(`/admin/users/${rows[0].id}/invite`, {
+                method: "POST",
+                cookie: adminCookie,
+              })
+            ).status,
+            409,
+          );
+          const events = await database.query(
+            "SELECT event FROM airmech.audit_events WHERE entity_id=$1",
+            [rows[0].id],
+          );
+          for (const event of ["USER_CREATED", "USER_INVITE_RESENT", "USER_INVITATION_ACCEPTED"])
+            assert.ok(events.some((row) => row.event === event));
+        },
+      );
+      await t.test(
+        "built desktop/mobile UI completes real API invitation, resend and PKCE recovery",
+        async () => {
+          const { chromium } = require("@playwright/test");
+          const browser = await chromium.launch({
+            headless: true,
+            ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE
+              ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE }
+              : {}),
+          });
+          try {
+            const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+            const page = await context.newPage();
+            // A loopback proxy sends the real browser requests to the owned API;
+            // no authentication/admin response is fabricated.
+            await page.route("**/api/**", async (route) => {
+              const target = new URL(route.request().url());
+              const result = await route.fetch({
+                url: `${api}${target.pathname.slice(4)}${target.search}`,
+              });
+              await route.fulfill({ response: result });
+            });
+            await page.goto(`${appUrl}/login`);
+            await page.getByLabel("Email", { exact: true }).fill(admin.email);
+            await page.getByLabel("Password", { exact: true }).fill(admin.password);
+            await page.getByRole("button", { name: "Sign in", exact: true }).click();
+            await page.waitForURL("**/workspace");
+            await page.goto(`${appUrl}/admin/users`);
+            await page.getByRole("button", { name: "Invite user", exact: true }).click();
+            const email = `${randomUUID()}@example.invalid`;
+            await page.getByLabel("Email", { exact: true }).fill(email);
+            await page.getByLabel("Name", { exact: true }).fill("UI invited colleague");
+            await page.getByLabel("Engineer / Technician", { exact: true }).check();
+            await page.getByRole("button", { name: "Send invitation", exact: true }).click();
+            await page.getByText("Invitation requested.", { exact: true }).waitFor();
+            const identity = fixture.accounts.get(email);
+            assert.ok(identity);
+            const user = (
+              await database.query("SELECT id FROM airmech.users WHERE identity_id=$1", [
+                identity.id,
+              ])
+            )[0];
+            created.push({ userId: user.id });
+            await page.getByLabel("Find users", { exact: true }).fill(email);
+            await page.getByRole("button", { name: "Search", exact: true }).click();
+            await page
+              .getByRole("button", { name: "Edit", exact: true })
+              .filter({ visible: true })
+              .click();
+            await page.getByRole("button", { name: "Resend invitation", exact: true }).click();
+            await page
+              .getByText("Invitation resend requested. Previous setup sessions were revoked.", {
+                exact: true,
+              })
+              .waitFor();
+            await until(() =>
+              [...fixture.invitations.values()].some(
+                (item) => item.user.id === identity.id && !item.used,
+              ),
+            );
+            const [hash] = [...fixture.invitations.entries()].find(
+              ([, value]) => value.user.id === identity.id && !value.used,
+            );
+            await page.setViewportSize({ width: 390, height: 844 });
+            const providerVerification = await fetch(`${fixture.url}/auth/v1/verify`, {
+              method: "POST",
+              headers: { apikey: "fixture-public-key", "Content-Type": "application/json" },
+              body: JSON.stringify({ type: "invite", token_hash: hash }),
+            });
+            assert.equal(providerVerification.status, 200);
+            const providerSession = await providerVerification.json();
+            await page.goto(
+              `${appUrl}/auth/callback#type=invite&access_token=${encodeURIComponent(providerSession.access_token)}&refresh_token=fixture-unused-refresh`,
+            );
+            await page.waitForURL("**/auth/reset-password");
+            const password = "fixture-ui-setup-password-123";
+            await page.getByLabel("Password", { exact: true }).fill(password);
+            await page.getByLabel("Confirm password", { exact: true }).fill(password);
+            await page.getByRole("button", { name: "Save password" }).click();
+            await page
+              .getByText("Your password was saved. Sign in with the new password.", { exact: true })
+              .waitFor();
+            assert.equal(
+              (await database.query("SELECT status FROM airmech.users WHERE id=$1", [user.id]))[0]
+                .status,
+              "active",
+            );
+            await page.getByRole("link", { name: "Back to sign in" }).click();
+            await page.getByLabel("Email", { exact: true }).fill(email);
+            await page.getByLabel("Password", { exact: true }).fill(password);
+            await page.getByRole("button", { name: "Sign in", exact: true }).click();
+            await page.waitForURL("**/workspace");
+            await page.getByRole("button", { name: "Account", exact: true }).click();
+            await page.getByRole("link", { name: "Reset password", exact: true }).click();
+            await page.getByLabel("Email", { exact: true }).fill(email);
+            await page.getByRole("button", { name: "Send reset instructions" }).click();
+            await page
+              .getByText(
+                "If your account exists, instructions will arrive by email. Open the link in this browser.",
+                { exact: true },
+              )
+              .waitFor();
+            await until(() =>
+              [...fixture.recoveries.values()].some((item) => item.user.id === identity.id),
+            );
+            const [code] = [...fixture.recoveries.entries()].find(
+              ([, value]) => value.user.id === identity.id,
+            );
+            await page.goto(`${appUrl}/auth/callback?code=${code}`);
+            await page.waitForURL("**/auth/reset-password");
+            await page
+              .getByLabel("Password", { exact: true })
+              .fill("fixture-ui-reset-password-456");
+            await page
+              .getByLabel("Confirm password", { exact: true })
+              .fill("fixture-ui-reset-password-456");
+            await page.getByRole("button", { name: "Save password" }).click();
+            await page
+              .getByText("Your password was saved. Sign in with the new password.", { exact: true })
+              .waitFor();
+            assert.equal(identity.password, "fixture-ui-reset-password-456");
+            assert.equal(
+              (
+                await database.query(
+                  "SELECT count(*)::integer AS count FROM airmech.auth_sessions WHERE user_id=$1",
+                  [user.id],
+                )
+              )[0].count,
+              0,
+            );
+            await context.close();
+          } finally {
+            await browser.close();
+          }
+        },
+      );
+      await t.test(
+        "an active user's provider token cannot become an invitation setup session",
+        async () => {
+          const providerLogin = await fetch(`${fixture.url}/auth/v1/token?grant_type=password`, {
+            method: "POST",
+            headers: { apikey: "fixture-public-key", "Content-Type": "application/json" },
+            body: JSON.stringify({ email: admin.email, password: admin.password }),
+          });
+          assert.equal(providerLogin.status, 200);
+          const session = await providerLogin.json();
+          assert.equal(
+            (
+              await request("/auth/invitation/session", {
+                method: "POST",
+                body: { accessToken: session.access_token },
+              })
+            ).status,
+            400,
+          );
+          assert.equal(
+            (
+              await request("/auth/invitation/session", {
+                method: "POST",
+                body: { accessToken: "expired-token" },
+              })
+            ).status,
+            400,
+          );
+        },
+      );
+      await t.test(
+        "revoked provisioning authority rolls back the profile and removes only its new identity",
+        async () => {
+          const operator = await seed("super_admin");
+          const operatorCookie = await login(operator);
+          const email = `${randomUUID()}@example.invalid`;
+          fixture.state.pauseProvision = true;
+          fixture.state.provisionStarted = false;
+          const creation = request("/admin/users", {
+            method: "POST",
+            cookie: operatorCookie,
+            body: { email, displayName: "Revoked provision", roles: ["engineer"] },
+          });
+          await until(() => fixture.state.provisionStarted);
+          assert.equal(
+            (
+              await request(`/admin/users/${operator.userId}/disable`, {
+                method: "POST",
+                cookie: adminCookie,
+              })
+            ).status,
+            204,
+          );
+          fixture.releaseProvision();
+          fixture.state.pauseProvision = false;
+          assert.equal((await creation).status, 401);
+          assert.equal(fixture.accounts.has(email), false);
+          assert.equal(
+            (
+              await database.query(
+                "SELECT count(*)::integer AS count FROM airmech.users WHERE email=$1",
+                [email],
+              )
+            )[0].count,
+            0,
+          );
+          assert.equal(
+            (
+              await database.query(
+                "SELECT count(*)::integer AS count FROM airmech.audit_events WHERE actor_id=$1 AND event='USER_INVITE_PROFILE_FAILED'",
+                [operator.userId],
+              )
+            )[0].count,
+            1,
           );
         },
       );
@@ -573,7 +1190,12 @@ test(
     } finally {
       fixture.releaseRecovery();
       fixture.releasePassword();
-      const cleanup = await Promise.allSettled([application.close(), delivery.close()]);
+      fixture.releaseProvision();
+      const cleanup = await Promise.allSettled([
+        application.close(),
+        delivery.close(),
+        web.close(),
+      ]);
       try {
         if (created.length)
           await database.query(

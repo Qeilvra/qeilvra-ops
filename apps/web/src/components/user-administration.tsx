@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { hasPermission, type AccessPrincipal } from "@airmech/contracts";
 import {
   Button,
@@ -33,6 +33,7 @@ interface AdminUser {
 interface AdminRole {
   code: string;
   name: string;
+  active: boolean;
   permissions: string[];
   allowedPermissions: string[];
 }
@@ -45,11 +46,17 @@ function rolesResponse(value: unknown): { items: AdminRole[]; permissions: strin
   if (!isRecord(value) || !Array.isArray(value.items) || !Array.isArray(value.permissions))
     throw new Error("Invalid response");
   const items = value.items.map((item: unknown) => {
-    if (!isRecord(item) || typeof item.code !== "string" || typeof item.name !== "string")
+    if (
+      !isRecord(item) ||
+      typeof item.code !== "string" ||
+      typeof item.name !== "string" ||
+      typeof item.active !== "boolean"
+    )
       throw new Error("Invalid response");
     return {
       code: item.code,
       name: item.name,
+      active: item.active,
       permissions: strings(item.permissions),
       allowedPermissions: strings(item.allowedPermissions),
     };
@@ -103,6 +110,7 @@ function UserManagement({ principal }: { principal: AccessPrincipal }) {
   const [editing, setEditing] = useState<AdminUser | "new" | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [confirming, setConfirming] = useState<AdminUser | null>(null);
+  const catalogRequest = useRef<Promise<ReturnType<typeof rolesResponse>> | null>(null);
   const canManage =
     principal.roles.includes("super_admin") && hasPermission(principal, "admin.users");
   const load = useCallback(
@@ -110,17 +118,24 @@ function UserManagement({ principal }: { principal: AccessPrincipal }) {
       setLoading(true);
       setError(null);
       try {
+        catalogRequest.current ??= apiRequest("/admin/roles")
+          .then(rolesResponse)
+          .catch((failure: unknown) => {
+            catalogRequest.current = null;
+            throw failure;
+          });
         const [list, catalog] = await Promise.all([
           apiRequest(
             `/admin/users?page=${page}&search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`,
             signal ? { signal } : {},
           ),
-          apiRequest("/admin/roles", signal ? { signal } : {}),
+          catalogRequest.current,
         ]);
+        if (signal?.aborted) return;
         const result = usersResponse(list);
         setRecords(result.items);
         setTotal(result.total);
-        setRoles(rolesResponse(catalog).items);
+        setRoles(catalog.items);
       } catch (failure: unknown) {
         if (!signal?.aborted) setError(safeMessage(failure));
       } finally {
@@ -191,9 +206,9 @@ function UserManagement({ principal }: { principal: AccessPrincipal }) {
         <Checkbox
           key={role.code}
           id={`user-role-${role.code}`}
-          label={role.name}
+          label={`${role.name}${role.active ? "" : " (Disabled)"}`}
           checked={selectedRoles.includes(role.code)}
-          disabled={busy}
+          disabled={busy || (!role.active && !selectedRoles.includes(role.code))}
           onChange={(event) =>
             setSelectedRoles((current) =>
               event.target.checked
@@ -417,29 +432,46 @@ function UserManagement({ principal }: { principal: AccessPrincipal }) {
               </Button>
             </form>
             {editing !== "new" && (
-              <form
-                className="admin-form"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const current = editing;
-                  action(
-                    () =>
-                      apiRequest(`/admin/users/${current.id}/roles`, {
-                        method: "POST",
-                        body: { roles: selectedRoles },
-                      }),
-                    "Roles saved. Existing sessions were revoked.",
-                  ).catch(() => setError("Roles could not be saved."));
-                }}
-              >
-                {roleChoices}
-                <p>
-                  Changing roles signs this user out. The final active Super Admin is protected.
-                </p>
-                <Button type="submit" variant="secondary" busy={busy}>
-                  Save roles
-                </Button>
-              </form>
+              <>
+                {editing.status === "invited" && (
+                  <Button
+                    variant="secondary"
+                    busy={busy}
+                    onClick={() => {
+                      const current = editing;
+                      action(
+                        () => apiRequest(`/admin/users/${current.id}/invite`, { method: "POST" }),
+                        "Invitation resend requested. Previous setup sessions were revoked.",
+                      ).catch(() => setError("The invitation could not be resent."));
+                    }}
+                  >
+                    Resend invitation
+                  </Button>
+                )}
+                <form
+                  className="admin-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const current = editing;
+                    action(
+                      () =>
+                        apiRequest(`/admin/users/${current.id}/roles`, {
+                          method: "POST",
+                          body: { roles: selectedRoles },
+                        }),
+                      "Roles saved. Existing sessions were revoked.",
+                    ).catch(() => setError("Roles could not be saved."));
+                  }}
+                >
+                  {roleChoices}
+                  <p>
+                    Changing roles signs this user out. The final active Super Admin is protected.
+                  </p>
+                  <Button type="submit" variant="secondary" busy={busy}>
+                    Save roles
+                  </Button>
+                </form>
+              </>
             )}
           </>
         )}
@@ -456,7 +488,7 @@ function UserManagement({ principal }: { principal: AccessPrincipal }) {
             <p>
               {confirming.status !== "disabled"
                 ? "This user will lose application access and all current sessions."
-                : "This user will regain access through a new sign-in."}
+                : "The previous account status will be restored. An invited user must still complete password setup."}
             </p>
             <p>{confirming.display_name}</p>
             <Button
@@ -493,6 +525,7 @@ function RoleManagement({ principal }: { principal: AccessPrincipal }) {
   const [editing, setEditing] = useState<AdminRole | null>(null);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [revision, setRevision] = useState(0);
+  const [confirming, setConfirming] = useState<AdminRole | null>(null);
   const canManage =
     principal.roles.includes("super_admin") && hasPermission(principal, "admin.roles");
   useEffect(() => {
@@ -565,6 +598,15 @@ function RoleManagement({ principal }: { principal: AccessPrincipal }) {
           columns={[
             { key: "role", label: "Role", render: (row) => <strong>{row.name}</strong> },
             {
+              key: "status",
+              label: "Status",
+              render: (row) => (
+                <StatusBadge tone={row.active ? "success" : "danger"}>
+                  {row.active ? "Active" : "Disabled"}
+                </StatusBadge>
+              ),
+            },
+            {
               key: "grants",
               label: "Permissions",
               render: (row) => (
@@ -584,15 +626,23 @@ function RoleManagement({ principal }: { principal: AccessPrincipal }) {
                     key: "actions",
                     label: "Actions",
                     render: (row: AdminRole) => (
-                      <Button
-                        variant="secondary"
-                        onClick={() => {
-                          setEditing(row);
-                          setPermissions(row.permissions);
-                        }}
-                      >
-                        Manage grants
-                      </Button>
+                      <div className="admin-actions">
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            setEditing(row);
+                            setPermissions(row.permissions);
+                          }}
+                        >
+                          Manage grants
+                        </Button>
+                        <Button
+                          variant={row.active ? "danger" : "secondary"}
+                          onClick={() => setConfirming(row)}
+                        >
+                          {row.active ? "Deactivate role" : "Activate role"}
+                        </Button>
+                      </div>
                     ),
                   },
                 ]
@@ -652,6 +702,46 @@ function RoleManagement({ principal }: { principal: AccessPrincipal }) {
               Save grants
             </Button>
           </form>
+        )}
+      </Modal>
+      <Modal
+        open={confirming !== null}
+        title={confirming?.active ? "Deactivate role" : "Activate role"}
+        onOpenChange={(open) => {
+          if (!open && !busy) setConfirming(null);
+        }}
+      >
+        {confirming && (
+          <>
+            <p>{confirming.name}</p>
+            <p>
+              {confirming.active
+                ? "All grants from this role will stop applying. Affected users will be signed out. The final effective Super Admin path is protected."
+                : "This role's saved grants will apply again. Affected users must sign in again."}
+            </p>
+            {error && <ErrorState>{error}</ErrorState>}
+            <Button
+              busy={busy}
+              variant={confirming.active ? "danger" : "secondary"}
+              onClick={() => {
+                const current = confirming;
+                setBusy(true);
+                setError(null);
+                apiRequest(
+                  `/admin/roles/${current.code}/${current.active ? "disable" : "enable"}`,
+                  { method: "POST" },
+                )
+                  .then(() => {
+                    setConfirming(null);
+                    setRevision((value) => value + 1);
+                  })
+                  .catch((failure: unknown) => setError(safeMessage(failure)))
+                  .finally(() => setBusy(false));
+              }}
+            >
+              Confirm role change
+            </Button>
+          </>
         )}
       </Modal>
     </>
